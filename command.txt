@@ -1,0 +1,27 @@
+grayscale
+----------------
+
+########### basic ###########
+
+python ../test_attack_black.py --translateRGB --untargeted --attack basic -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 10 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "basic10_230130" --start_idx=0 --dist_metrics "pdist" 
+python ../test_attack_black.py --translateRGB --untargeted --attack basic -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 20 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "basic20_230130" --start_idx=0 --dist_metrics "pdist" 
+
+
+########### AoE ###########
+
+python ../test_attack_black.py --translateRGB --untargeted --attack transform_ensemble -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 10 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "ensemble10_230130" --start_idx=0 --dist_metrics "pdist" 
+python ../test_attack_black.py --translateRGB --untargeted --attack transform_ensemble -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 20 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "ensemble20_230130" --start_idx=0 --dist_metrics "pdist" 
+
+########### AoT ###########
+
+1
+python ../test_attack_black.py --translateRGB --untargeted --attack transform_crop -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 10 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "Tcrop10_230130" --start_idx=0 --dist_metrics "pdist" 
+python ../test_attack_black.py --translateRGB --untargeted --attack transform_crop -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 20 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "Tcrop20_230130" --start_idx=0 --dist_metrics "pdist" 
+
+2
+python ../test_attack_black.py --translateRGB --untargeted --attack transform_scale -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 10 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "Tscale10_230130" --start_idx=0 --dist_metrics "pdist"
+python ../test_attack_black.py --translateRGB --untargeted --attack transform_scale -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 20 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "Tscale20_230130" --start_idx=0 --dist_metrics "pdist" 
+
+3
+python ../test_attack_black.py --translateRGB --untargeted --attack transform_rot -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 10 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "Trot10_230130" --start_idx=0 --dist_metrics "pdist" 
+python ../test_attack_black.py --translateRGB --untargeted --attack transform_rot -d imagenet --reset_adam -n 20 --solver adam -b 2 -p 1 --hash 20 --use_resize --method "tanh" --batch 256 --gpu 0 --lr 0.01 -s "Trot20_230130" --start_idx=0 --dist_metrics "pdist" 
