@@ -338,15 +338,13 @@ class BlackBoxL2:
         # these are variables to be more efficient in sending data to tf
         # we only work on 1 image at once; the batch is for evaluation loss at different modifiers
         self.timg = tf.Variable(np.zeros(single_shape), dtype=tf.float32)  # grayscale
-        self.timg1 = tf.Variable(np.zeros(single_shape), dtype=tf.float32)  # grayscale
-        self.timg2 = tf.Variable(np.zeros(single_shape), dtype=tf.float32)  # grayscale
+        self.timg_multi = tf.Variable(np.zeros((self.multi_imgs_num, ) + single_shape), dtype=tf.float32)  # grayscale
         self.thimg = tf.Variable(np.zeros(target_shape), dtype=tf.float32)
         # self.tlab = tf.Variable(np.zeros(num_labels), dtype=tf.float32)
         self.const = tf.Variable(0.0, dtype=tf.float32)
 
         self.assign_timg = tf.placeholder(tf.float32, single_shape) 
-        self.assign_timg1 = tf.placeholder(tf.float32, single_shape) 
-        self.assign_timg2 = tf.placeholder(tf.float32, single_shape) 
+        self.assign_timg_multi = tf.placeholder(tf.float32, (self.multi_imgs_num, ) + single_shape) 
         self.assign_thimg = tf.placeholder(tf.float32, target_shape) 
         # self.assign_tlab = tf.placeholder(tf.float32, num_labels)
         self.assign_const = tf.placeholder(tf.float32)
@@ -514,8 +512,7 @@ class BlackBoxL2:
         # these are the variables to initialize when we run
         self.setup = []
         self.setup.append(self.timg.assign(self.assign_timg))
-        self.setup.append(self.timg1.assign(self.assign_timg1))
-        self.setup.append(self.timg2.assign(self.assign_timg2))
+        self.setup.append(self.timg_multi.assign(self.assign_timg_multi))
         self.setup.append(self.thimg.assign(self.assign_thimg))
         self.setup.append(self.const.assign(self.assign_const))
         # prepare the list of all valid variables
@@ -775,10 +772,6 @@ class BlackBoxL2:
             img = img[0]
         if len(gray_img.shape) == 4:
             gray_img = gray_img[0]
-        if len(gray_img1.shape) == 4:
-            gray_img1 = gray_img1[0]
-        if len(gray_img2.shape) == 4:
-            gray_img2 = gray_img2[0]
         if len(targetHashimg.shape) == 4:
             targetHashimg = targetHashimg[0]
 
@@ -786,8 +779,7 @@ class BlackBoxL2:
         if self.use_tanh:
             img = np.arctanh(img*1.999999)
             gray_img = np.arctanh(gray_img*1.999999)  # literally times 2
-            gray_img1 = np.arctanh(gray_img1*1.999999)  # literally times 2
-            gray_img2 = np.arctanh(gray_img2*1.999999)  # literally times 2
+            multi_gray_imgs = np.arctanh(multi_gray_imgs*1.999999)
             targetHashimg = np.arctanh(targetHashimg*1.999999)
             
 
@@ -799,8 +791,7 @@ class BlackBoxL2:
         # convert img to float32 to avoid numba error
         img = img.astype(np.float32)
         gray_img = gray_img.astype(np.float32)
-        gray_img1 = gray_img1.astype(np.float32)
-        gray_img2 = gray_img2.astype(np.float32)
+        multi_gray_imgs = multi_gray_imgs.astype(np.float32)
         targetHashimg = targetHashimg.astype(np.float32)
     
         # set the upper and lower bounds for the modifier
@@ -851,7 +842,7 @@ class BlackBoxL2:
             if self.repeat == True and outer_step == self.BINARY_SEARCH_STEPS-1:
                 CONST = upper_bound
             
-            self.sess.run(self.setup, {self.assign_timg: gray_img, self.assign_timg1: gray_img1, self.assign_timg2: gray_img2, self.assign_thimg: targetHashimg, self.assign_const: CONST})
+            self.sess.run(self.setup, {self.assign_timg: gray_img, self.assign_timg_multi: multi_gray_imgs, self.assign_thimg: targetHashimg, self.assign_const: CONST})
             prev = 1e10
             train_timer = 0.0
             last_loss1 = 1.0
