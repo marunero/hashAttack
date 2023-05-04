@@ -340,9 +340,6 @@ class BlackBoxL2:
         self.thimg = tf.Variable(np.zeros(target_shape), dtype=tf.float32)
         # self.tlab = tf.Variable(np.zeros(num_labels), dtype=tf.float32)
         self.const = tf.Variable(0.0, dtype=tf.float32)
-        self.imgt1 = tf.Variable(np.zeros(single_shape), dtype=tf.float32) 
-        self.imgt2 = tf.Variable(np.zeros(single_shape), dtype=tf.float32)  
-        self.imgt3 = tf.Variable(np.zeros(single_shape), dtype=tf.float32) 
 
         self.assign_timg = tf.placeholder(tf.float32, single_shape) 
         self.assign_timg1 = tf.placeholder(tf.float32, single_shape) 
@@ -350,9 +347,6 @@ class BlackBoxL2:
         self.assign_thimg = tf.placeholder(tf.float32, target_shape) 
         # self.assign_tlab = tf.placeholder(tf.float32, num_labels)
         self.assign_const = tf.placeholder(tf.float32)
-        self.assign_imgt1 = tf.placeholder(tf.float32, single_shape)
-        self.assign_imgt2 = tf.placeholder(tf.float32, single_shape)
-        self.assign_imgt3 = tf.placeholder(tf.float32, single_shape)
         # the resulting image, tanh'd to keep bounded from -0.5 to 0.5
         # broadcast self.timg to every dimension of modifier
         if use_tanh:
@@ -394,14 +388,7 @@ class BlackBoxL2:
        
             if use_tanh:
                 #self.output2 = model.predict1(self.newimg, tf.tanh(self.timg) / 2, self.method)
-                if self.attack == "transform_ensemble":
-                    self.output2 = model.predict1(self.newimg, tf.tanh(self.thimg) / 2, self.method, self.TARGETED)
-                    self.output2 += model.predict1(self.newimg, tf.tanh(self.imgt1) / 2, self.method, self.TARGETED)
-                    self.output2 += model.predict1(self.newimg, tf.tanh(self.imgt2) / 2, self.method, self.TARGETED)
-                    self.output2 += model.predict1(self.newimg, tf.tanh(self.imgt3) / 2, self.method, self.TARGETED)
-                    self.output2 /= 4
-                else:
-                    self.output2 = model.predict1(self.newimg, tf.tanh(self.thimg) / 2, self.method, self.TARGETED)
+                self.output2 = model.predict1(self.newimg, tf.tanh(self.thimg) / 2, self.method, self.TARGETED)
             
             else:
                 self.output2 = model.predict1(self.newimg, self.thimg, self.method, self.TARGETED)
@@ -415,14 +402,7 @@ class BlackBoxL2:
         
         else: # elif self.htype == "blockhash": 
             if use_tanh:
-                if self.attack == "transform_ensemble":
-                    self.output2 = model.predict2(self.newimg, tf.tanh(self.thimg) / 2, self.TARGETED)
-                    self.output2 += model.predict2(self.newimg, tf.tanh(self.imgt1) / 2, self.TARGETED)
-                    self.output2 += model.predict2(self.newimg, tf.tanh(self.imgt2) / 2, self.TARGETED)
-                    self.output2 += model.predict2(self.newimg, tf.tanh(self.imgt3) / 2, self.TARGETED)
-                    self.output2 /= 4
-                else:
-                    self.output2 = model.predict2(self.newimg, tf.tanh(self.thimg) / 2, self.TARGETED)
+                self.output2 = model.predict2(self.newimg, tf.tanh(self.thimg) / 2, self.TARGETED)
             
             else:
                 self.output2 = model.predict2(self.newimg, self.thimg, self.TARGETED)           
@@ -535,10 +515,6 @@ class BlackBoxL2:
         self.setup.append(self.timg2.assign(self.assign_timg2))
         self.setup.append(self.thimg.assign(self.assign_thimg))
         self.setup.append(self.const.assign(self.assign_const))
-        self.setup.append(self.imgt1.assign(self.assign_imgt1))
-        self.setup.append(self.imgt2.assign(self.assign_imgt2))
-        self.setup.append(self.imgt3.assign(self.assign_imgt3))
-
         # prepare the list of all valid variables
         var_size = self.small_x * self.small_y * num_channels
         self.use_var_len = var_size
@@ -788,7 +764,7 @@ class BlackBoxL2:
         return np.array(r)
 
     # only accepts 1 image at a time. Batch is used for gradient evaluations at different points
-    def attack_batch(self, gray_img, gray_img1, gray_img2, img, targetHashimg, img_id, t1, t2, t3):
+    def attack_batch(self, gray_img, gray_img1, gray_img2, img, targetHashimg, img_id):
    
         # remove the extra batch dimension
         if len(img.shape) == 4:
@@ -871,7 +847,7 @@ class BlackBoxL2:
             if self.repeat == True and outer_step == self.BINARY_SEARCH_STEPS-1:
                 CONST = upper_bound
             
-            self.sess.run(self.setup, {self.assign_timg: gray_img, self.assign_timg1: gray_img1, self.assign_timg2: gray_img2, self.assign_thimg: targetHashimg, self.assign_const: CONST, self.assign_imgt1: t1, self.assign_imgt2: t2, self.assign_imgt3: t3})
+            self.sess.run(self.setup, {self.assign_timg: gray_img, self.assign_timg1: gray_img1, self.assign_timg2: gray_img2, self.assign_thimg: targetHashimg, self.assign_const: CONST})
             prev = 1e10
             train_timer = 0.0
             last_loss1 = 1.0

@@ -93,49 +93,7 @@ def gen_image(arr):
 
     return img
 
-def generate_aot(inputs, ratio):
-    height = inputs.shape[0]
-    width = inputs.shape[1]
-    channel = inputs.shape[2]
-    result_inputs = resize(inputs, (height, int(width * ratio), channel) ,anti_aliasing=True) # previous: 1.1
 
-    clip = int((width * ratio - width)/2)
-    result_inputs = np.array(result_inputs[:, clip:clip+width])
-
-    return result_inputs
-
-
-def generate_transformation(all_gray_inputs, i, ratio):
-    height, width, channel = all_gray_inputs.shape[0], all_gray_inputs.shape[1], all_gray_inputs.shape[2]
-    # tform1 = transform.AffineTransform(scale=(0.98,0.98),rotation=0.02,translation=(6,6))
-    # if dataset == "imagenet":
-    #     tform2 = transform.AffineTransform(rotation=0.05,translation=(15,15)) # 0.05
-    #     imgs_tform2 = transform.warp(all_gray_inputs, tform2)
-    #     # imgs_tform1 = imgs_tform1[10:289, 10:289]
-    #     rotation_array= imgs_tform2[5:285, 5:285] # ~5% central cropping
-
-    #     cropped_array = all_gray_inputs[20:279, 20:279] # 15%
-        
-    # elif dataset == "face":
-    #tform2 = transform.AffineTransform(rotation=0.05,translation=(int(height * 0.05), int(width*0.05))) # 0.05
-    tform2 = transform.AffineTransform(rotation=0.02) # 0.05
-    imgs_tform2 = transform.warp(all_gray_inputs, tform2)
-    #rotation_array= imgs_tform2[int(height*0.1/ 2): int(height - (height*0.1)/ 2), int(height*0.1/ 2):int(width - (width*0.1)/ 2)] #0.05
-    rotation_array= imgs_tform2[int ((height*0.05)/ 2): int(height - (height*0.05)/ 2), int ((width*0.05)/ 2):int(width - (width*0.05)/ 2)] #0.05
-    cropped_array = all_gray_inputs[0: int(height - (height*0.05)/ 2), 0:int(width - (width*0.05)/ 2)] # 10%
-    aot_array = generate_aot(all_gray_inputs, ratio)
-
-    def resize_array(img_array, height, width, channel):
-        # resized_array = cv2.resize(img_array, (299,299), interpolation=cv2.INTER_AREA)
-        resized_array = resize(img_array, (height,width, channel),anti_aliasing=True)
-        resized_array = np.resize(resized_array, (resized_array.shape[0], resized_array.shape[1], resized_array.shape[2]))
-
-        return resized_array
-
-    resized2 = resize_array(rotation_array, height, width, channel)
-    resized6 = resize_array(cropped_array, height, width, channel)
- 
-    return resized2, resized6, aot_array
 
 
 def main(args):
@@ -202,7 +160,7 @@ def main(args):
 
         all_inputs, all_targets, all_labels, all_true_ids, all_gray_inputs = generate_data(data, targeted = not args['untargeted'], 
                                                                           inception=is_inception)
-        # all_gray_inputs_tfomr1, all_gray_inputs_tform2 = generate_transformation(all_gray_inputs)
+                                                                          
         print('Done...')
         os.system("mkdir -p {}/{}".format(args['save'], args['dataset']))
         img_no = args["start_idx"]
@@ -238,22 +196,6 @@ def main(args):
             gray_inputs = all_gray_inputs[i]
             second_gray_inputs = all_gray_inputs[i + 1]
 
-            
-            
-
-            gray_inputs_t1, gray_inputs_t2, gray_inputs_t3 = generate_transformation(gray_inputs, i, args["ratio"]) 
-            inputs_t1, inputs_t2, inputs_t3 = generate_transformation(inputs, i, args['ratio'])
-            
-            if args['attack'] == 'transform_rot' or args['attack'] == 'transform_crop' or args['attack'] == 'transform_scale':    
-                if args['attack'] == 'transform_rot':
-                    gray_inputs = gray_inputs_t1
-                    inputs = inputs_t1
-                elif args['attack'] == 'transform_crop':
-                    gray_inputs = gray_inputs_t2
-                    inputs = inputs_t2
-                else:
-                    gray_inputs = gray_inputs_t3
-                    inputs = inputs_t3   
             
             target_hash_inputs = all_targets[i]
 
@@ -305,7 +247,7 @@ def main(args):
             else:
                 targetHashimg = target_hash_inputs
             
-            adv, adv_sec, const, L3, adv_current, first_iteration, nimg, modifier, loss_x, loss_y = attack.attack_batch(gray_inputs, gray_inputs, second_gray_inputs, inputs, targetHashimg, i, gray_inputs_t1, gray_inputs_t2, gray_inputs_t3)
+            adv, adv_sec, const, L3, adv_current, first_iteration, nimg, modifier, loss_x, loss_y = attack.attack_batch(gray_inputs, gray_inputs, second_gray_inputs, inputs, targetHashimg, i)
             
 
             # print(adv.shape) = (644, 400, 1)
