@@ -194,7 +194,9 @@ def main(args):
             print('for image id ', all_true_ids[i])
             inputs = all_inputs[i]
             gray_inputs = all_gray_inputs[i]
-            second_gray_inputs = all_gray_inputs[i + 1]
+
+            multi = args['multi']
+            multi_gray_inputs = all_gray_inputs[i:i + multi]
 
             
             target_hash_inputs = all_targets[i]
@@ -212,7 +214,7 @@ def main(args):
             # print(imagehash.phash(gen_image(all_gray_inputs[min_hash_i])))
             print('each rgb inputs shape ', inputs.shape)
             print('each gray inputs shape ', gray_inputs.shape)
-            print('second gray inputs shape ', second_gray_inputs.shape)
+            print('multi gray inputs shape ', multi_gray_inputs.shape)
             print('each target inputs shape ', target_hash_inputs.shape)
             # if len(gray_inputs.shape) == 4:
             #     gray_inputs = gray_inputs[0]
@@ -229,13 +231,12 @@ def main(args):
                                 adam_beta2=args['adam_beta2'], reset_adam_after_found=args['reset_adam'],
                                 solver=args['solver'], attack = args['attack'], save_ckpts=args['save_ckpts'], load_checkpoint=args['load_ckpt'],
                                 start_iter=args['start_iter'],
-                                init_size=args['init_size'], use_importance=not args['uniform'], method=args['method'], dct=args['dct'], dist_metrics=args['dist_metrics'], htype=args["htype"], height=gray_inputs.shape[0], width=gray_inputs.shape[1], channels=gray_inputs.shape[2], theight=target_hash_inputs.shape[0], twidth=target_hash_inputs.shape[1], tchannels=target_hash_inputs.shape[2])
+                                init_size=args['init_size'], use_importance=not args['uniform'], method=args['method'], dct=args['dct'], dist_metrics=args['dist_metrics'], htype=args["htype"], height=gray_inputs.shape[0], width=gray_inputs.shape[1], channels=gray_inputs.shape[2], theight=target_hash_inputs.shape[0], twidth=target_hash_inputs.shape[1], tchannels=target_hash_inputs.shape[2], multi_imgs_num = multi)
 
 
 
             inputs = inputs.reshape((1, ) + inputs.shape)
             gray_inputs = gray_inputs.reshape((1, ) + gray_inputs.shape)
-            second_gray_inputs = second_gray_inputs.reshape((1, ) + second_gray_inputs.shape)
             target_hash_inputs = target_hash_inputs.reshape((1, ) + target_hash_inputs.shape)
 
             timestart = time.time()
@@ -247,7 +248,7 @@ def main(args):
             else:
                 targetHashimg = target_hash_inputs
             
-            adv, adv_sec, const, L3, adv_current, first_iteration, nimg, modifier, loss_x, loss_y = attack.attack_batch(gray_inputs, gray_inputs, second_gray_inputs, inputs, targetHashimg, i)
+            adv, adv_sec, const, L3, adv_current, first_iteration, nimg, modifier, loss_x, loss_y = attack.attack_batch(gray_inputs, multi_gray_inputs, inputs, targetHashimg, i)
             
 
             # print(adv.shape) = (644, 400, 1)
@@ -508,6 +509,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dataset", choices=["mnist", "cifar10", "imagenet", "maladv", "face", "random"], default="imagenet")
     parser.add_argument("-s", "--save", default="./saved_results")
     parser.add_argument("-n", "--numimg", type=int, default=0, help="number of test images to attack")
+    parser.add_argument("-mu", "--multi", type=int, default=1, help="number of images to attack simultaneously")
     parser.add_argument("-m", "--maxiter", type=int, default=0, help="set 0 to use default value")
     parser.add_argument("-p", "--print_every", type=int, default=100, help="print objs every PRINT_EVERY iterations")
     parser.add_argument("-o", "--early_stop_iters", type=int, default=0,

@@ -218,7 +218,7 @@ class BlackBoxL2:
                  use_log=False, use_tanh=True, use_resize=False, adam_beta1=0.9, adam_beta2=0.999,
                  reset_adam_after_found=False,
                  solver="adam", attack="basic", save_ckpts="", load_checkpoint="", start_iter=0,
-                 init_size=32, use_importance=True, method='tanh', dct=True, dist_metrics="", maximize="plus", htype="phash", height=288, width=288, channels=1, theight=288, twidth=288, tchannels=1):
+                 init_size=32, use_importance=True, method='tanh', dct=True, dist_metrics="", maximize="plus", htype="phash", height=288, width=288, channels=1, theight=288, twidth=288, tchannels=1, multi_imgs_num=1):
         """
         The L_2 optimized attack. 
         This attack is the most efficient and should be used as the primary 
@@ -264,6 +264,9 @@ class BlackBoxL2:
         self.resize_init_size = init_size
         self.use_importance = use_importance
         self.feature_extractor = load_extractor('high_extract')
+
+        self.multi_imgs_num = multi_imgs_num
+
         if use_resize:
             self.small_x = self.resize_init_size
             self.small_y = self.resize_init_size
@@ -764,8 +767,9 @@ class BlackBoxL2:
         return np.array(r)
 
     # only accepts 1 image at a time. Batch is used for gradient evaluations at different points
-    def attack_batch(self, gray_img, gray_img1, gray_img2, img, targetHashimg, img_id):
+    def attack_batch(self, gray_img, multi_gray_imgs, img, targetHashimg, img_id):
    
+    # def attack_batch(self, gray_img, gray_img1, gray_img2, img, targetHashimg, img_id):
         # remove the extra batch dimension
         if len(img.shape) == 4:
             img = img[0]
