@@ -36,6 +36,7 @@ INITIAL_CONST = 0.5      # the initial constant c to pick as a first guess
 
 delta = 0.19999
 
+
 _URL = 'http://rail.eecs.berkeley.edu/models/lpips'
 # import GPUtil
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # so the IDs match nvidia-smi
@@ -69,13 +70,22 @@ def _download(url, output_dir):
 
 
 @jit(nopython=True)
-def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real_modifier, up, down, lr, adam_epoch, beta1, beta2, proj):
+def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real_modifier, up, down, lr, adam_epoch, beta1, beta2, proj, multi_imgs_num, mc_sample):
     # indice = np.array(range(0, 3*299*299), dtype = np.int32)
     
-    for i in range(batch_size):
+    for i in range(batch_size ):
+        grad[i] = 0
+
+        for j in range(multi_imgs_num):
+            for k in range(mc_sample // 2):
+                grad[i] += losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k]
+                grad[i] -= losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample // 2) + k]
+        grad[i] /= delta * (mc_sample // 2) * (1 + mc_sample // 2)
+
+
         # grad[i] = (losses[i*2+1] - losses[i*2+2]) / 0.6
-        grad[i] = (losses[i * 4 + 2] + losses[i * 4 + 3] - losses[i * 4 + 4] - losses[i * 4 + 5]) / (6 * delta)
-        grad[i] += (losses[batch_size * 4 + i * 4 + 2] + losses[batch_size * 4 + i * 4 + 3] - losses[batch_size * 4 + i * 4 + 4] - losses[batch_size * 4 + i * 4 + 5]) / (6 * delta)
+        # grad[i] = (losses[i * 4 + 2] + losses[i * 4 + 3] - losses[i * 4 + 4] - losses[i * 4 + 5]) / (6 * delta)
+        # grad[i] += (losses[batch_size * 4 + i * 4 + 2] + losses[batch_size * 4 + i * 4 + 3] - losses[batch_size * 4 + i * 4 + 4] - losses[batch_size * 4 + i * 4 + 5]) / (6 * delta)
         # grad[i] = min(grad[i], 0.1)
 
     # ADAM update
@@ -104,7 +114,6 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
     #     lr = max(lr / 2, 0.001)
     # if score > best_score:
     #     lr = min(lr * 2, 0.1)
-
     return lr
 
 def ADAM2(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real_modifier, lr, adam_epoch, beta1, beta2, proj, beta, z, q=1):
@@ -353,10 +362,23 @@ class BlackBoxL2:
         # broadcast self.timg to every dimension of modifier
         if use_tanh:
             
-            def add_modifiers(image):
-                return tf.add(image, self.scaled_modifier)
-            modified_images = tf.map_fn(add_modifiers, self.timg_multi)
-            self.newimg = tf.concat([tf.concat([self.timg_multi[i:i+1], modified_images[i]], axis=0) for i in range(self.timg_multi.shape[0])], axis=0)
+            l = []
+
+            for i in range(self.timg_multi.shape[0]):
+                l.append(self.scaled_modifier[0] + self.timg_multi[i])
+            
+            for i in range(self.timg_multi.shape[0]):
+                s = self.scaled_modifier + self.timg_multi[i]
+                l = tf.concat([l, s[1:self.batch_size * self.mc_sample + 1]], axis=0)
+
+            self.newimg = tf.tanh(l) / 2
+
+
+
+            # def add_modifiers(image):
+            #     return tf.add(image, self.scaled_modifier)
+            # modified_images = tf.map_fn(add_modifiers, self.timg_multi)
+            # self.newimg = tf.concat([tf.concat([self.timg_multi[i:i+1], modified_images[i]], axis=0) for i in range(self.timg_multi.shape[0])], axis=0)
 
         #     self.newimg = tf.tanh(tf.concat([(self.scaled_modifier + self.timg1)[0:1, :, :, :], (self.scaled_modifier + self.timg2)[0: 1, :, :, :], (self.scaled_modifier + self.timg1)[1:self.batch_size * 4 + 1, :, :, :], (self.scaled_modifier + self.timg2)[1:self.batch_size * 4 + 1, :, :, :]], axis=0)) / 2
         
@@ -697,7 +719,7 @@ class BlackBoxL2:
         var = np.repeat(self.real_modifier, self.batch_size * self.mc_sample + 1, axis=0)
         var_size = self.real_modifier.size
         if self.use_importance:
-            var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False, p = self.sample_prob)
+            var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False)
         else:
             var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False)
         indice = self.var_list[var_indice]
@@ -719,7 +741,7 @@ class BlackBoxL2:
         
         #losses, l2s, loss1, loss2, loss3, scores, nimgs = self.sess.run([self.loss, self.l2dist, self.loss1, self.loss2, self.loss3, self.output2, self.newimg], feed_dict={self.modifier: var})
         losses, l2s, loss1, loss2, scores, nimgs= self.sess.run([self.loss, self.l2dist, self.loss1, self.loss2, self.output2, self.newimg], feed_dict={self.modifier: var})
-        self.LEARNING_RATE = self.solver(losses, indice, self.grad, self.hess, self.batch_size, self.mt, self.vt, self.real_modifier, self.modifier_up, self.modifier_down, self.LEARNING_RATE, self.adam_epoch, self.beta1, self.beta2, not self.use_tanh)
+        self.LEARNING_RATE = self.solver(losses, indice, self.grad, self.hess, self.batch_size, self.mt, self.vt, self.real_modifier, self.modifier_up, self.modifier_down, self.LEARNING_RATE, self.adam_epoch, self.beta1, self.beta2, not self.use_tanh, self.multi_imgs_num, self.mc_sample)
         # print("verifying============= ", self.adam_epoch)
         # adjust sample probability, sample around the points with large gradient
         # if self.save_ckpts:
@@ -745,6 +767,7 @@ class BlackBoxL2:
 
         # print('loss3 is for verification======= ', loss3[0], loss3[1], loss3[2])
         print(loss1)
+        print(self.grad)
         return losses[0], l2s[0], loss1[0] + loss1[1], loss2[0], scores[0] + scores[1], nimgs[0], nimgs[1], nimgs, loss1[0], loss1[1]
 
     def initialize_modifier(self):
@@ -889,7 +912,6 @@ class BlackBoxL2:
                 
                 # print("shape")
                 # print(loss.shape, loss1.shape, loss2.shape)
-                # print(self.loss1)
                 if iteration%(self.print_every) == 0:
                     print("[STATS][L2] iter = {}, cost = {}, time = {:.3f}, size = {}, loss = {:.5g}, loss1 = {:.5g}, loss2 = {:.5g}, lr={}".format(iteration, eval_costs, train_timer, self.real_modifier.shape, loss[0], loss1[0], loss2[0], self.LEARNING_RATE))
                     sys.stdout.flush()
