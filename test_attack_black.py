@@ -197,7 +197,6 @@ def main(args):
 
             multi = args['multi']
             multi_gray_inputs = all_gray_inputs[i:i + multi]
-
             
             target_hash_inputs = all_targets[i]
 
@@ -231,7 +230,7 @@ def main(args):
                                 adam_beta2=args['adam_beta2'], reset_adam_after_found=args['reset_adam'],
                                 solver=args['solver'], attack = args['attack'], save_ckpts=args['save_ckpts'], load_checkpoint=args['load_ckpt'],
                                 start_iter=args['start_iter'],
-                                init_size=args['init_size'], use_importance=not args['uniform'], method=args['method'], dct=args['dct'], dist_metrics=args['dist_metrics'], htype=args["htype"], height=gray_inputs.shape[0], width=gray_inputs.shape[1], channels=gray_inputs.shape[2], theight=target_hash_inputs.shape[0], twidth=target_hash_inputs.shape[1], tchannels=target_hash_inputs.shape[2], multi_imgs_num = multi)
+                                init_size=args['init_size'], use_importance=not args['uniform'], method=args['method'], dct=args['dct'], dist_metrics=args['dist_metrics'], htype=args["htype"], height=gray_inputs.shape[0], width=gray_inputs.shape[1], channels=gray_inputs.shape[2], theight=target_hash_inputs.shape[0], twidth=target_hash_inputs.shape[1], tchannels=target_hash_inputs.shape[2], multi_imgs_num = multi, mc_sample = args['mc_sample'])
 
 
 
@@ -510,6 +509,7 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--save", default="./saved_results")
     parser.add_argument("-n", "--numimg", type=int, default=0, help="number of test images to attack")
     parser.add_argument("-mu", "--multi", type=int, default=1, help="number of images to attack simultaneously")
+    parser.add_argument("-mc", "--mc_sample", type=int, default=2, help="number of images to attack simultaneously")
     parser.add_argument("-m", "--maxiter", type=int, default=0, help="set 0 to use default value")
     parser.add_argument("-p", "--print_every", type=int, default=100, help="print objs every PRINT_EVERY iterations")
     parser.add_argument("-o", "--early_stop_iters", type=int, default=0,

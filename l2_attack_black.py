@@ -218,7 +218,7 @@ class BlackBoxL2:
                  use_log=False, use_tanh=True, use_resize=False, adam_beta1=0.9, adam_beta2=0.999,
                  reset_adam_after_found=False,
                  solver="adam", attack="basic", save_ckpts="", load_checkpoint="", start_iter=0,
-                 init_size=32, use_importance=True, method='tanh', dct=True, dist_metrics="", maximize="plus", htype="phash", height=288, width=288, channels=1, theight=288, twidth=288, tchannels=1, multi_imgs_num=1):
+                 init_size=32, use_importance=True, method='tanh', dct=True, dist_metrics="", maximize="plus", htype="phash", height=288, width=288, channels=1, theight=288, twidth=288, tchannels=1, multi_imgs_num=1, mc_sample = 2):
         """
         The L_2 optimized attack. 
         This attack is the most efficient and should be used as the primary 
@@ -266,6 +266,7 @@ class BlackBoxL2:
         self.feature_extractor = load_extractor('high_extract')
 
         self.multi_imgs_num = multi_imgs_num
+        self.mc_sample = mc_sample
 
         if use_resize:
             self.small_x = self.resize_init_size
@@ -352,9 +353,15 @@ class BlackBoxL2:
         # broadcast self.timg to every dimension of modifier
         if use_tanh:
             
-            self.newimg = tf.tanh(tf.concat([(self.scaled_modifier + self.timg1)[0:1, :, :, :], (self.scaled_modifier + self.timg2)[0: 1, :, :, :], (self.scaled_modifier + self.timg1)[1:self.batch_size * 4 + 1, :, :, :], (self.scaled_modifier + self.timg2)[1:self.batch_size * 4 + 1, :, :, :]], axis=0))/2
-            
-            # self.newimg = tf.tanh(self.scaled_modifier + self.timg)/2
+            def add_modifiers(image):
+                return tf.add(image, self.scaled_modifier)
+            modified_images = tf.map_fn(add_modifiers, self.timg_multi)
+            self.newimg = tf.concat([tf.concat([self.timg_multi[i:i+1], modified_images[i]], axis=0) for i in range(self.timg_multi.shape[0])], axis=0)
+
+        #     self.newimg = tf.tanh(tf.concat([(self.scaled_modifier + self.timg1)[0:1, :, :, :], (self.scaled_modifier + self.timg2)[0: 1, :, :, :], (self.scaled_modifier + self.timg1)[1:self.batch_size * 4 + 1, :, :, :], (self.scaled_modifier + self.timg2)[1:self.batch_size * 4 + 1, :, :, :]], axis=0)) / 2
+        
+        # self.newimg = tf.tanh(self.scaled_modifier + self.timg)/2
+        # self.scaled_modifier = self.batch_size * self.mc_sample + 1
 
         # (self.scaled_modifier + self.timg1)[0:1, :, :, :]
         # (self.scaled_modifier + self.timg1)[2:self.batch_size + 2, :, :, :]
@@ -687,7 +694,7 @@ class BlackBoxL2:
 
     def blackbox_optimizer(self, iteration, bestscore):
         # build new inputs, based on current variable value
-        var = np.repeat(self.real_modifier, self.batch_size * 4 + 1, axis=0)
+        var = np.repeat(self.real_modifier, self.batch_size * self.mc_sample + 1, axis=0)
         var_size = self.real_modifier.size
         if self.use_importance:
             var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False, p = self.sample_prob)
@@ -702,17 +709,19 @@ class BlackBoxL2:
         # indice = self.perm[self.perm_index:self.perm_index + self.batch_size]
         # b[0] has the original mo difier, b[1] has one index added 0.0001
         for i in range(self.batch_size):
-            var[i * 4 + 1].reshape(-1)[indice[i]] += 2 * delta 
-            var[i * 4 + 2].reshape(-1)[indice[i]] += delta 
-            var[i * 4 + 3].reshape(-1)[indice[i]] -= delta 
-            var[i * 4 + 4].reshape(-1)[indice[i]] -= 2 * delta 
+            for j in range(self.mc_sample // 2):
+                var[i * self.mc_sample + j + 1] += (self.mc_sample // 2 - j) * delta
+                var[i * self.mc_sample + self.mc_sample - j] -= (self.mc_sample // 2- j) * delta
+            # var[i * 4 + 1].reshape(-1)[indice[i]] += 2 * delta 
+            # var[i * 4 + 2].reshape(-1)[indice[i]] += delta 
+            # var[i * 4 + 3].reshape(-1)[indice[i]] -= delta 
+            # var[i * 4 + 4].reshape(-1)[indice[i]] -= 2 * delta 
         
         #losses, l2s, loss1, loss2, loss3, scores, nimgs = self.sess.run([self.loss, self.l2dist, self.loss1, self.loss2, self.loss3, self.output2, self.newimg], feed_dict={self.modifier: var})
         losses, l2s, loss1, loss2, scores, nimgs= self.sess.run([self.loss, self.l2dist, self.loss1, self.loss2, self.output2, self.newimg], feed_dict={self.modifier: var})
         self.LEARNING_RATE = self.solver(losses, indice, self.grad, self.hess, self.batch_size, self.mt, self.vt, self.real_modifier, self.modifier_up, self.modifier_down, self.LEARNING_RATE, self.adam_epoch, self.beta1, self.beta2, not self.use_tanh)
         # print("verifying============= ", self.adam_epoch)
         # adjust sample probability, sample around the points with large gradient
-        "don't need to save every modifier"
         # if self.save_ckpts:
         #     np.save('{}/iter{}'.format(self.save_ckpts, iteration), self.real_modifier)
 
@@ -885,14 +894,6 @@ class BlackBoxL2:
                     print("[STATS][L2] iter = {}, cost = {}, time = {:.3f}, size = {}, loss = {:.5g}, loss1 = {:.5g}, loss2 = {:.5g}, lr={}".format(iteration, eval_costs, train_timer, self.real_modifier.shape, loss[0], loss1[0], loss2[0], self.LEARNING_RATE))
                     sys.stdout.flush()
                 
-
-                # if iteration%(self.print_every) == 0:
-                #     target_hash = imagehash.phash(gen_image(targetHashimg))
-
-                #     ad = self.scaled_modifier + self.timg
-                #     adv_hash = imagehash.phash(gen_image(ad))
-                #     print("hash difference = {}, target hash = {}, adv hash = {}".format(target_hash - adv_hash, target_hash, adv_hash))
-                    
                 #     sys.stdout.flush()
                 attack_begin_time = time.time()
                 # perform the attack 
