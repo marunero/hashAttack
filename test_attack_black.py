@@ -478,25 +478,26 @@ def main(args):
             print("overal average perceptual distance ", pdistance_total / (img_no-args["start_idx"]))
             print("overal average iterations ", total_iterations / (img_no-args["start_idx"]))
 
-            for j in range(int(len(loss_x) / 3)):
+            # print(loss_x)
+            # print(loss_y)
+
+            for j in range(int(len(loss_x) / 2)):
                 plot_suffix = "result/id" + str(i) + "_binery_step" + str(j + 1)
-                for k in range(3):
-                    plt.figure()
+  
+                plt.figure()
 
-                    plt.plot(loss_x[j * 3], loss_y[j * 3], label='sum of 1 and 2')
-                    plt.legend(loc='best')
-                    plt.plot(loss_x[j * 3 + 1], loss_y[j * 3 + 1], label='hash loss - img 1')
-                    plt.legend(loc='best')
-                    plt.plot(loss_x[j * 3 + 2], loss_y[j * 3 + 2], label='hash loss - img 2')
-                    plt.legend(loc='best')
+                plt.plot(loss_x[j * 2], loss_y[j * 2], label='sum of 1 and 2')
+                plt.legend(loc='best')
+                plt.plot(loss_x[j * 2 + 1], loss_y[j * 2 + 1], label='hash loss - imgs')
+                plt.legend(loc='best')
 
-                    
-                    now = datetime.datetime.now()
-                    current_time = now.strftime("%m_%d_%H_%M")
+                
+                now = datetime.datetime.now()
+                current_time = now.strftime("%m_%d_%H_%M")
 
-                    plt.savefig(plot_suffix + current_time + ".png")
-                    plt.clf()
-            plt.close('all')
+                plt.savefig(plot_suffix + current_time + ".png")
+                plt.clf()
+            plt.close('all')    
 
             
 

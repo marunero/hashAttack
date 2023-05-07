@@ -373,13 +373,6 @@ class BlackBoxL2:
 
             self.newimg = tf.tanh(l) / 2
 
-
-
-            # def add_modifiers(image):
-            #     return tf.add(image, self.scaled_modifier)
-            # modified_images = tf.map_fn(add_modifiers, self.timg_multi)
-            # self.newimg = tf.concat([tf.concat([self.timg_multi[i:i+1], modified_images[i]], axis=0) for i in range(self.timg_multi.shape[0])], axis=0)
-
         #     self.newimg = tf.tanh(tf.concat([(self.scaled_modifier + self.timg1)[0:1, :, :, :], (self.scaled_modifier + self.timg2)[0: 1, :, :, :], (self.scaled_modifier + self.timg1)[1:self.batch_size * 4 + 1, :, :, :], (self.scaled_modifier + self.timg2)[1:self.batch_size * 4 + 1, :, :, :]], axis=0)) / 2
         
         # self.newimg = tf.tanh(self.scaled_modifier + self.timg)/2
@@ -767,8 +760,10 @@ class BlackBoxL2:
 
         # print('loss3 is for verification======= ', loss3[0], loss3[1], loss3[2])
         print(loss1)
-        print(self.grad)
-        return losses[0], l2s[0], loss1[0] + loss1[1], loss2[0], scores[0] + scores[1], nimgs[0], nimgs[1], nimgs, loss1[0], loss1[1]
+
+        loss_out = loss1[0:self.multi_imgs_num].sum()
+        scores_out = scores[0:self.multi_imgs_num].sum()
+        return losses[0], l2s[0], loss_out, loss2[0], scores_out, nimgs[0], nimgs[1], nimgs, loss1[0:self.multi_imgs_num]
 
     def initialize_modifier(self):
         self.real_modifier = np.zeros((1,) + self.small_single_shape, dtype=np.float32)
@@ -864,8 +859,7 @@ class BlackBoxL2:
 
             lx = []
             ly_sum = []
-            ly_1 = []
-            ly_2 = []
+            ly = []
 
             bestl2 = 1e10
             bestscore = 1
@@ -923,8 +917,8 @@ class BlackBoxL2:
                     l, l2, loss1, loss2, score, nimg = self.fake_blackbox_optimizer()
                 elif self.solver_name == "adam" or self.solver_name == "newton" or self.solver_name == "adam_newton":
                     # l, l2, loss1, loss2, loss3, score, nimg = self.blackbox_optimizer(iteration)
-                    l, l2, loss1, loss2, score, nimg, second_nimg, nimgs, loss1_1, loss1_2 = self.blackbox_optimizer(iteration, bestscore)
-                print(loss1)
+                    l, l2, loss1, loss2, score, nimg, second_nimg, nimgs, loss1es = self.blackbox_optimizer(iteration, bestscore)
+
                 # l = self.blackbox_optimizer(iteration)
                 if self.solver_name == "fake_zero":
                     eval_costs += np.prod(self.real_modifier.shape)
@@ -933,8 +927,7 @@ class BlackBoxL2:
 
                 lx.append(iteration)
                 ly_sum.append(loss1)
-                ly_1.append(loss1_1)
-                ly_2.append(loss1_2)
+                ly.append(loss1es)
                 prev_modifier_saved = np.copy(self.real_modifier)
 
 
@@ -1021,9 +1014,7 @@ class BlackBoxL2:
             loss_x.append(lx)
             loss_y.append(ly_sum)
             loss_x.append(lx)
-            loss_y.append(ly_1)
-            loss_x.append(lx)
-            loss_y.append(ly_2)
+            loss_y.append(ly)
 
             # adjust the constant as needed
             if bestscore <= 0:

@@ -31,7 +31,7 @@ save = ['Tcrop', 'Tscale', 'Trot']
 
 
 # li = [[80, 0.01]]
-li = [[16000, 0.01]]
+li = [[400, 0.01]]
 # cmd = 'python ../test_attack_black.py --translateRGB --attack basic -d imagenet --maxiter 2000 --reset_adam -n 1 --solver adam -b 1 -p 1 --hash 10 --use_resize --method "tanh" --batch 64 --gpu 0 --lr 0.005 -s target --start_idx=0 --dist_metrics "pdist"'
 
 for i in range(len(li)):
@@ -44,4 +44,4 @@ for i in range(len(li)):
 
     # targeted
 
-    os.system('python ../test_attack_black.py -ht phash -c 10 --translateRGB --attack basic -d imagenet --maxiter ' + iteration + ' --reset_adam --start_idx 0 -n 1 -mu 1 -mc 4 --solver adam -b 2 -p 1 --hash 32 --use_resize --init_size 64 --method "tanh" --batch 8 --gpu 0 --lr ' + lr + ' -s target  --dist_metrics "l2dist" --save_ckpts np --seed ' + str(1600 + i))
+    os.system('python ../test_attack_black.py -ht phash -c 10 --translateRGB --attack basic -d imagenet --maxiter ' + iteration + ' --reset_adam --start_idx 0 -n 1 -mu 3 -mc 4 --solver adam -b 1 -p 1 --hash 32 --use_resize --init_size 64 --method "tanh" --batch 4 --gpu 0 --lr ' + lr + ' -s target  --dist_metrics "l2dist" --save_ckpts np --seed ' + str(1600 + i))
