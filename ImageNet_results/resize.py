@@ -50,45 +50,23 @@ def phash(image, hash_size=8, highfreq_factor=4):
 	diff = dctlowfreq > med
 	return dctlowfreq, med, diff
 
-def resizeImage():
-	path = "C:/Users/sungwoo/Downloads/imgdata"
-	file_list = os.listdir(path)
-
-	size_counts = {}
-
-	index = 0
-
-	for i, file_name in enumerate(file_list):
-		img = Image.open(os.path.join(path, file_name))
-
-		# big_size = (600, 600)
-		# small_size = (200, 200)
-
-		# big_image = img.resize(big_size)
-		# small_image = img.resize(small_size)
-
-		# big_image.save('resize_save/' + 'big_' + file_name)
-		# small_image.save('resize_save/' + 'small_' + file_name
-
-		# if img.size in size_counts:
-		# 	size_counts[img.size] += 1
-		# else:
-		# 	size_counts[img.size] = 1
-		if img.size == (500, 375):
-			img.save('C:/Users/sungwoo/Downloads/size_500_375/' + "id{:05d}.png".format(index))
-			index += 1
 
 
+def grad_test():
+	multi_imgs_num = 3
+	batch_size = 4
+	mc_sample = 4
+	delta = 0.19999
 
-	# save_path = 'resize_save'
+	for i in range(batch_size):
+		print("-----")
+		print("batch = " + str(i))
+		print("-----")
+		
+		for j in range(multi_imgs_num):
+			for k in range(mc_sample // 2):
+				print("+ : " + str(multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k))
+				print("- : " + str(multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample // 2) + k))
+		print(delta * (mc_sample // 2) * (1 + mc_sample // 2))
 
-	# save_file_list = os.listdir(save_path)
-
-	# for i, file_name in enumerate(save_file_list):
-	# 	img = Image.open(os.path.join(path, file_name))
-
-
-
-	
-
-resizeImage()
+grad_test()

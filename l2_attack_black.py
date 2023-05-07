@@ -73,7 +73,7 @@ def _download(url, output_dir):
 def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real_modifier, up, down, lr, adam_epoch, beta1, beta2, proj, multi_imgs_num, mc_sample):
     # indice = np.array(range(0, 3*299*299), dtype = np.int32)
     
-    for i in range(batch_size ):
+    for i in range(batch_size):
         grad[i] = 0
 
         for j in range(multi_imgs_num):
@@ -719,7 +719,7 @@ class BlackBoxL2:
         var = np.repeat(self.real_modifier, self.batch_size * self.mc_sample + 1, axis=0)
         var_size = self.real_modifier.size
         if self.use_importance:
-            var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False)
+            var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False, p = self.sample_prob)
         else:
             var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False)
         indice = self.var_list[var_indice]
@@ -732,8 +732,8 @@ class BlackBoxL2:
         # b[0] has the original mo difier, b[1] has one index added 0.0001
         for i in range(self.batch_size):
             for j in range(self.mc_sample // 2):
-                var[i * self.mc_sample + j + 1] += (self.mc_sample // 2 - j) * delta
-                var[i * self.mc_sample + self.mc_sample - j] -= (self.mc_sample // 2- j) * delta
+                var[i * self.mc_sample + j + 1].reshape(-1)[indice[i]] += (self.mc_sample // 2 - j) * delta
+                var[i * self.mc_sample + self.mc_sample - j].reshape(-1)[indice[i]] -= (self.mc_sample // 2- j) * delta
             # var[i * 4 + 1].reshape(-1)[indice[i]] += 2 * delta 
             # var[i * 4 + 2].reshape(-1)[indice[i]] += delta 
             # var[i * 4 + 3].reshape(-1)[indice[i]] -= delta 

@@ -44,4 +44,4 @@ for i in range(len(li)):
 
     # targeted
 
-    os.system('python ../test_attack_black.py -ht phash -c 10 --translateRGB --attack basic -d imagenet --maxiter ' + iteration + ' --reset_adam --start_idx 0 -n 1 -mu 3 -mc 4 --solver adam -b 2 -p 1 --hash 32 --use_resize --init_size 64 --method "tanh" --batch 4 --gpu 0 --lr ' + lr + ' -s target  --dist_metrics "l2dist" --save_ckpts np --seed ' + str(1600 + i))
+    os.system('python ../test_attack_black.py -ht phash -c 10 --translateRGB --attack basic -d imagenet --maxiter ' + iteration + ' --reset_adam --start_idx 0 -n 1 -mu 1 -mc 4 --solver adam -b 2 -p 1 --hash 32 --use_resize --init_size 64 --method "tanh" --batch 8 --gpu 0 --lr ' + lr + ' -s target  --dist_metrics "l2dist" --save_ckpts np --seed ' + str(1600 + i))
