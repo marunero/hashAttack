@@ -24,6 +24,7 @@ from PIL import Image
 from six.moves import urllib
 import imagehash
 
+import datetime
 from utils import load_extractor
 BINARY_SEARCH_STEPS = 1  # number of times to adjust the constant with binary search
 MAX_ITERATIONS = 1000   # number of iterations to perform gradient descent
@@ -34,7 +35,7 @@ TARGETED = True          # should we target one specific class? or just be wrong
 CONFIDENCE = 0           # how strong the adversarial example should be
 INITIAL_CONST = 0.5      # the initial constant c to pick as a first guess
 
-delta = 0.19999
+delta = 0.24999
 
 
 _URL = 'http://rail.eecs.berkeley.edu/models/lpips'
@@ -101,6 +102,7 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
     m = real_modifier.reshape(-1)
     old_val = m[indice] 
     old_val -= lr * corr * mt / (np.sqrt(vt) + 1e-8)
+    print(lr * corr * mt / (np.sqrt(vt) + 1e-8))
     # set it back to [-0.5, +0.5] region
     if proj:
         
@@ -224,7 +226,7 @@ class BlackBoxL2:
                  early_stop_iters=0,
                  abort_early=ABORT_EARLY,
                  initial_const=INITIAL_CONST,
-                 use_log=False, use_tanh=True, use_resize=False, adam_beta1=0.9, adam_beta2=0.999,
+                 use_log=False, use_tanh=True, use_resize=False, adam_beta1=0.99, adam_beta2=0.9999,
                  reset_adam_after_found=False,
                  solver="adam", attack="basic", save_ckpts="", load_checkpoint="", start_iter=0,
                  init_size=32, use_importance=True, method='tanh', dct=True, dist_metrics="", maximize="plus", htype="phash", height=288, width=288, channels=1, theight=288, twidth=288, tchannels=1, multi_imgs_num=1, mc_sample = 2):

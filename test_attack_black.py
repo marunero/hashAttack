@@ -201,12 +201,24 @@ def main(args):
             target_hash_inputs = all_targets[i]
 
             if args['untargeted'] == False:
-                input_img = gen_image(inputs)
-                target_img = gen_image(target_hash_inputs)
+                if args['htype'] == "phash":
+                    input_img = gen_image(inputs)
+                    target_img = gen_image(target_hash_inputs)
 
-                h_d = imagehash.phash(input_img) - imagehash.phash(target_img)
+                    h_d = imagehash.phash(input_img) - imagehash.phash(target_img)
+                    print("input[0] and target phash difference = ", h_d)
+                elif args['htype'] == "pdqhash":
+                    np_input = np.array(gen_image(inputs))
+                    cv2_img1 = cv2.cvtColor(np_input, cv2.COLOR_RGB2BGR)
+                    h1, q1 = pdqhash.compute(cv2_img1)
 
-                print("target hash difference = ", h_d)
+                    np_target = np.array(gen_image(target_hash_inputs))
+                    cv2_img2 = cv2.cvtColor(np_target, cv2.COLOR_RGB2BGR)
+                    h2, q2 = pdqhash.compute(cv2_img2)
+
+                    h_d = ((h1 != h2) * 1).sum()
+                    print("input[0] and target pdqhash difference = ", h_d)
+                
             
             
             # print(min_hash)
@@ -310,8 +322,12 @@ def main(args):
             print("perceptual metrics distance between adv_current and img", distance2[0])
             print("normalized perceptual metrics distance between adv and img", distance1_normalized)
             print("normalized perceptual metrics distance between adv_current and img", distance2_normalized)
-      
+
+            print(adv.shape)
             inputs_img = gen_image(gray_inputs)
+
+            adv = adv[0]
+
             adv_img = gen_image(adv)
             target_hash_img = gen_image(targetHashimg)
 
@@ -464,8 +480,7 @@ def main(args):
                 adv_rgb = np.clip(adv_rgb, -0.5, 0.5)
                 differ = np.clip(differ, -0.5, 0.5)
 
-                show(adv_rgb, "{}/id{}_adv_current_{}.png".format(args['save'],  i, suffix_current))
-                show(adv_sec, "{}/{}_adv2RGB_{}.png".format(args['save'], img_no,suffix_current))
+                show(adv_current, "{}/id{}_adv_current_{}.png".format(args['save'],  i, suffix_current))
                 
                 # if args['translateRGB']:
                     

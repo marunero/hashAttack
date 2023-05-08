@@ -9,7 +9,7 @@ from torchvision import transforms
 import imagehash
 import torch 
 import robusthash
-import cv2 as cv
+import cv2
 import tensorflow.compat.v1 as tf
 import pandas as pd
 
@@ -29,6 +29,9 @@ except AttributeError:
 import shutil
 from matplotlib import pyplot as plt
 import blockhash
+
+import pdqhash
+
 
 def phash(image, hash_size=8, highfreq_factor=4):
 	# type: (Image.Image, int, int) -> ImageHash
@@ -53,20 +56,22 @@ def phash(image, hash_size=8, highfreq_factor=4):
 
 
 def grad_test():
-	multi_imgs_num = 3
-	batch_size = 4
-	mc_sample = 4
-	delta = 0.19999
 
-	for i in range(batch_size):
-		print("-----")
-		print("batch = " + str(i))
-		print("-----")
-		
-		for j in range(multi_imgs_num):
-			for k in range(mc_sample // 2):
-				print("+ : " + str(multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k))
-				print("- : " + str(multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample // 2) + k))
-		print(delta * (mc_sample // 2) * (1 + mc_sample // 2))
+	img1 = Image.open("ImageNet_sorted3/id00000.png")
+
+	np_img1 = np.array(img1)
+	cv2_img1 = cv2.cvtColor(np_img1, cv2.COLOR_RGB2BGR)
+	h1, q1 = pdqhash.compute(cv2_img1)
+
+	img2 = Image.open("ImageNet_sorted3/id00001.png")
+	np_img2 = np.array(img2)
+	cv2_img2 = cv2.cvtColor(np_img2, cv2.COLOR_RGB2BGR)
+	h2, q2 = pdqhash.compute(cv2_img2)
+
+	print(h1)
+	print(len(h1))
+	h1_float, _ = pdqhash.compute_float(cv2_img1)
+	print(h1_float.max())
+	print(h1_float.min())
 
 grad_test()
