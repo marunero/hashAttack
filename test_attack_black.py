@@ -16,10 +16,6 @@ import datetime
 from matplotlib import pyplot as plt
 
 from setup_imagenet_hash import ImageNet, ImageNet_HashModel
-# from setup_cifar_hash import CIFAR, CIFAR_HashModel
-#from setup_maladv_hash import MalAdv, MalAdv_HashModel
-# from setup_face_hash import Face, Face_HashModel
-# from setup_random_hash import Random, Random_HashModel
 from l2_attack_black import BlackBoxL2
 
 from PIL import Image
@@ -192,12 +188,17 @@ def main(args):
         # for i in start_idxs:
             torch.cuda.empty_cache()  
             print('for image id ', all_true_ids[i])
-            inputs = all_inputs[i]
-            gray_inputs = all_gray_inputs[i]
 
             multi = args['multi']
-            multi_gray_inputs = all_gray_inputs[i:i + multi]
+            gray_inputs = all_gray_inputs[i]
             
+            if args['use_grayscale']:
+                multi_inputs = all_gray_inputs[i:i + multi]
+                inputs = all_gray_inputs[i]
+            else:
+                multi_inputs = all_inputs[i:i + multi]
+                inputs = all_inputs[i]
+
             target_hash_inputs = all_targets[i]
 
             if args['untargeted'] == False:
@@ -223,9 +224,8 @@ def main(args):
             
             # print(min_hash)
             # print(imagehash.phash(gen_image(all_gray_inputs[min_hash_i])))
-            print('each rgb inputs shape ', inputs.shape)
-            print('each gray inputs shape ', gray_inputs.shape)
-            print('multi gray inputs shape ', multi_gray_inputs.shape)
+            print('each inputs shape ', inputs.shape)
+            print('multi inputs shape ', multi_inputs.shape)
             print('each target inputs shape ', target_hash_inputs.shape)
             # if len(gray_inputs.shape) == 4:
             #     gray_inputs = gray_inputs[0]
@@ -238,16 +238,15 @@ def main(args):
                                 initial_const=args['init_const'],
                                 binary_search_steps=args['binary_steps'], targeted=not args['untargeted'],
                                 use_log=use_log, use_tanh=args['use_tanh'],
-                                use_resize=args['use_resize'], adam_beta1=args['adam_beta1'],
+                                use_resize=args['use_resize'], use_grayscale=args['use_grayscale'], adam_beta1=args['adam_beta1'],
                                 adam_beta2=args['adam_beta2'], reset_adam_after_found=args['reset_adam'],
                                 solver=args['solver'], attack = args['attack'], save_ckpts=args['save_ckpts'], load_checkpoint=args['load_ckpt'],
                                 start_iter=args['start_iter'],
-                                init_size=args['init_size'], use_importance=not args['uniform'], method=args['method'], dct=args['dct'], dist_metrics=args['dist_metrics'], htype=args["htype"], height=gray_inputs.shape[0], width=gray_inputs.shape[1], channels=gray_inputs.shape[2], theight=target_hash_inputs.shape[0], twidth=target_hash_inputs.shape[1], tchannels=target_hash_inputs.shape[2], multi_imgs_num = multi, mc_sample = args['mc_sample'])
+                                init_size=args['init_size'], use_importance=not args['uniform'], method=args['method'], dct=args['dct'], dist_metrics=args['dist_metrics'], htype=args["htype"], height=gray_inputs.shape[0], width=gray_inputs.shape[1], channels=multi_inputs.shape[3], theight=target_hash_inputs.shape[0], twidth=target_hash_inputs.shape[1], tchannels=target_hash_inputs.shape[2], multi_imgs_num = multi, mc_sample = args['mc_sample'])
 
-
+            print(multi_inputs.shape[3])
 
             inputs = inputs.reshape((1, ) + inputs.shape)
-            gray_inputs = gray_inputs.reshape((1, ) + gray_inputs.shape)
             target_hash_inputs = target_hash_inputs.reshape((1, ) + target_hash_inputs.shape)
 
             timestart = time.time()
@@ -255,11 +254,11 @@ def main(args):
             
 
             if args['untargeted'] == True:
-                targetHashimg = gray_inputs
+                targetHashimg = inputs
             else:
                 targetHashimg = target_hash_inputs
             
-            adv, adv_sec, const, L3, adv_current, first_iteration, nimg, modifier, loss_x, loss_y = attack.attack_batch(gray_inputs, multi_gray_inputs, inputs, targetHashimg, i)
+            adv, adv_sec, const, L3, adv_current, first_iteration, nimg, modifier, loss_x, loss_y = attack.attack_batch(inputs, multi_inputs, targetHashimg, i)
             
 
             # print(adv.shape) = (644, 400, 1)
@@ -537,6 +536,7 @@ if __name__ == "__main__":
     parser.add_argument("-trgb", "--translateRGB", action='store_true')
     parser.add_argument("-r", "--reset_adam", action='store_true', help="reset adam after an initial solution is found")
     parser.add_argument("--use_resize", action='store_true', help="resize image (only works on imagenet!)")
+    parser.add_argument("--use_grayscale", action='store_true', help="convert grayscale image")
     parser.add_argument("--adam_beta1", type=float, default=0.9)
     parser.add_argument("--adam_beta2", type=float, default=0.999)
     parser.add_argument("--solver", choices=["adam", "adam2", "adam2_newton", "newton", "adam_newton", "fake_zero"], default="adam")
@@ -560,7 +560,7 @@ if __name__ == "__main__":
     parser.add_argument("--bits", "--hash_string_length", type=int, default=8)
     parser.add_argument("--factor", "--hash_string_factor", type=int, default=4)
     parser.add_argument("--maximize", "--if_plus_or_minus", choices=["plus", "minus"], default="minus")
-    parser.add_argument("-ht", "--htype", choices=["phash", "blockhash", "pdqhash"], default="phash")
+    parser.add_argument("-ht", "--htype", choices=["phash", "blockhash", "pdqhash", "photoDNA"], default="phash")
     parser.add_argument("-ra", "--ratio", type=float, default=1.1)
     parser.add_argument("--seed", type=int, default=1307)
     args = vars(parser.parse_args())

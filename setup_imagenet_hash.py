@@ -29,6 +29,51 @@ except AttributeError:
 	# https://pillow.readthedocs.io/en/stable/deprecations.html
 	ANTIALIAS = Image.ANTIALIAS
 
+
+# PhotoDNA
+import glob
+import time
+import base64
+from ctypes import cast
+from ctypes import cdll
+from ctypes import c_int
+from ctypes import c_ubyte
+from ctypes import POINTER
+from ctypes import c_char_p
+
+libPath = r'C:\Users\sungwoo\Downloads\hashAttack\pyPhotoDNA\PhotoDNAx64.dll'
+
+def generatePhotoDNAHash(imageFile):
+    if imageFile.mode != 'RGB':
+        imageFile = imageFile.convert(mode = 'RGB')
+    libPhotoDNA = cdll.LoadLibrary(libPath)
+    ComputeRobustHash = libPhotoDNA.ComputeRobustHash
+    ComputeRobustHash.argtypes = [c_char_p, c_int, c_int, c_int, POINTER(c_ubyte), c_int]
+    ComputeRobustHash.restype = c_ubyte
+    hashByteArray = (c_ubyte * 144)()
+    ComputeRobustHash(c_char_p(imageFile.tobytes()), imageFile.width, imageFile.height, 0, hashByteArray, 0)
+    hashPtr = cast(hashByteArray, POINTER(c_ubyte))
+    hashList = [str(hashPtr[i]) for i in range(144)]
+    hashString = ','.join([i for i in hashList])
+    hashList = hashString.split(',')
+    for i, hashPart in enumerate(hashList):
+        hashList[i] = int(hashPart).to_bytes((len(hashPart) + 7) // 8, 'big')
+    hashBytes = b''.join(hashList)
+    return hashBytes
+
+def PhotoDNA_Distance(h1, h2):
+	distance = 0
+	if len(h1) != 144:
+		panic("h1 wrong length")
+	
+	if len(h2) != 144:
+		panic("h2 wrong length")
+	
+
+	for i in range(len(h1)):
+		distance += abs(h1[i] - h2[i])
+	return distance
+
 global_threshold = 0
 
 def phash(image, hash_size=8, highfreq_factor=4):
@@ -176,6 +221,20 @@ def pfunction_tanh_pdq(arr, arr1, targeted):
     a = a.astype('float32')
     return a
 
+def pfunction_tanh_photoDNA(arr, arr1, targeted):
+    a = []
+
+    h1 = generatePhotoDNAHash(gen_image(arr1))
+
+    for i in range(arr.shape[0]):
+        h2 = generatePhotoDNAHash(gen_image(arr[i]))
+
+        a.append(PhotoDNA_Distance(h1, h2))
+
+    a = np.asarray(a)
+    a = a.astype('float32')
+    return a
+
 def pfunction_tanh2(arr, arr1, targeted):
     a = []
     timage = gen_image(arr1)
@@ -302,3 +361,6 @@ class ImageNet_HashModel:
         
     def predict_pdq(self, data, data1, targeted):
         return tf.py_function(pfunction_tanh_pdq, [data, data1, targeted], tf.float32)
+
+    def predict_photoDNA(self, data, data1, targeted):
+        return tf.py_function(pfunction_tanh_photoDNA, [data, data1, targeted], tf.float32)

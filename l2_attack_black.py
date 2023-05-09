@@ -26,6 +26,7 @@ import imagehash
 
 import datetime
 from utils import load_extractor
+
 BINARY_SEARCH_STEPS = 1  # number of times to adjust the constant with binary search
 MAX_ITERATIONS = 1000   # number of iterations to perform gradient descent
 ABORT_EARLY = True      # if we stop improving, abort gradient descent early
@@ -35,7 +36,9 @@ TARGETED = True          # should we target one specific class? or just be wrong
 CONFIDENCE = 0           # how strong the adversarial example should be
 INITIAL_CONST = 0.5      # the initial constant c to pick as a first guess
 
-delta = 0.24999
+
+mc = 4
+delta = 0.49999 / (mc / 2)
 
 
 _URL = 'http://rail.eecs.berkeley.edu/models/lpips'
@@ -226,7 +229,7 @@ class BlackBoxL2:
                  early_stop_iters=0,
                  abort_early=ABORT_EARLY,
                  initial_const=INITIAL_CONST,
-                 use_log=False, use_tanh=True, use_resize=False, adam_beta1=0.99, adam_beta2=0.9999,
+                 use_log=False, use_tanh=True, use_resize=False, use_grayscale=False, adam_beta1=0.99, adam_beta2=0.9999,
                  reset_adam_after_found=False,
                  solver="adam", attack="basic", save_ckpts="", load_checkpoint="", start_iter=0,
                  init_size=32, use_importance=True, method='tanh', dct=True, dist_metrics="", maximize="plus", htype="phash", height=288, width=288, channels=1, theight=288, twidth=288, tchannels=1, multi_imgs_num=1, mc_sample = 2):
@@ -288,6 +291,7 @@ class BlackBoxL2:
 
         self.use_tanh = use_tanh
         self.use_resize = use_resize
+        self.use_grayscale = use_grayscale
         self.save_ckpts = save_ckpts
         if save_ckpts:
             print('creating save_ckpts ', save_ckpts)
@@ -393,9 +397,13 @@ class BlackBoxL2:
             #self.newimg2 = tf.py_function(self.colorize, [self.newimg], tf.float32)
 
             # prepare for perceptual metrics
-            self.newimg_grgb =  tf.image.grayscale_to_rgb(self.newimg + 0.5)
-            self.timg_grgb = tf.image.grayscale_to_rgb(tf.tanh(self.timg)/2+ 0.5)
-            self.timg_grgb = tf.reshape(self.timg_grgb, (1,image_height,image_width,num_channels*3))
+            if self.use_grayscale:
+                self.newimg_grgb =  tf.image.grayscale_to_rgb(self.newimg + 0.5)
+                self.timg_grgb = tf.image.grayscale_to_rgb(tf.tanh(self.timg)/2+ 0.5)
+                self.timg_grgb = tf.reshape(self.timg_grgb, (1,image_height,image_width,num_channels*3))
+            else:
+                self.newimg_grgb = self.newimg
+                self.timg_grgb = self.timg
 
         else:
             self.newimg = self.scaled_modifier + self.timg    #grayscale
@@ -425,6 +433,12 @@ class BlackBoxL2:
             else:
                 self.output2 = model.predict_pdq(self.newimg, self.thimg, self.TARGETED)
         
+        elif self.htype == "photoDNA":
+            if use_tanh:
+                self.output2 = model.predict_photoDNA(self.newimg, tf.tanh(self.thimg), self.TARGETED)
+            else:
+                self.output2 = model.predict_photoDNA(self.newimg, self.thimg, self.TARGETED)
+
         else: # elif self.htype == "blockhash": 
             if use_tanh:
                 self.output2 = model.predict2(self.newimg, tf.tanh(self.thimg) / 2, self.TARGETED)
@@ -793,22 +807,18 @@ class BlackBoxL2:
         return np.array(r)
 
     # only accepts 1 image at a time. Batch is used for gradient evaluations at different points
-    def attack_batch(self, gray_img, multi_gray_imgs, img, targetHashimg, img_id):
+    def attack_batch(self, img, multi_imgs, targetHashimg, img_id):
    
-    # def attack_batch(self, gray_img, gray_img1, gray_img2, img, targetHashimg, img_id):
         # remove the extra batch dimension
         if len(img.shape) == 4:
             img = img[0]
-        if len(gray_img.shape) == 4:
-            gray_img = gray_img[0]
         if len(targetHashimg.shape) == 4:
             targetHashimg = targetHashimg[0]
 
         # convert to tanh-space
         if self.use_tanh:
             img = np.arctanh(img*1.999999)
-            gray_img = np.arctanh(gray_img*1.999999)  # literally times 2
-            multi_gray_imgs = np.arctanh(multi_gray_imgs*1.999999)
+            multi_imgs = np.arctanh(multi_imgs*1.999999)
             targetHashimg = np.arctanh(targetHashimg*1.999999)
             
 
@@ -819,15 +829,14 @@ class BlackBoxL2:
        
         # convert img to float32 to avoid numba error
         img = img.astype(np.float32)
-        gray_img = gray_img.astype(np.float32)
-        multi_gray_imgs = multi_gray_imgs.astype(np.float32)
+        multi_imgs = multi_imgs.astype(np.float32)
         targetHashimg = targetHashimg.astype(np.float32)
     
         # set the upper and lower bounds for the modifier
         if not self.use_tanh:
 
-            self.modifier_up = 0.5 - gray_img.reshape(-1)
-            self.modifier_down = -0.5 - gray_img.reshape(-1)
+            self.modifier_up = 0.5 - img.reshape(-1)
+            self.modifier_down = -0.5 - img.reshape(-1)
         self.LEARNING_RATE = self.learning_rate  # initial learning rate
         
         if not self.load_checkpoint:
@@ -846,12 +855,12 @@ class BlackBoxL2:
         loss_y = []
 
         o_bestscore= 1
-        o_bestattack = gray_img
-        o_bestattack_second = gray_img 
+        o_bestattack = img
+        o_bestattack_second = img 
         L3 = False
         o_bestscore2 = 1
         o_bestl22 = 1e10
-        o_bestattack2 = gray_img
+        o_bestattack2 = img
         count = 0  # for iterations
         o_iterations_first_attack = 0
         modifier = self.real_modifier
@@ -870,7 +879,7 @@ class BlackBoxL2:
             if self.repeat == True and outer_step == self.BINARY_SEARCH_STEPS-1:
                 CONST = upper_bound
             
-            self.sess.run(self.setup, {self.assign_timg: gray_img, self.assign_timg_multi: multi_gray_imgs, self.assign_thimg: targetHashimg, self.assign_const: CONST})
+            self.sess.run(self.setup, {self.assign_timg: img, self.assign_timg_multi: multi_imgs, self.assign_thimg: targetHashimg, self.assign_const: CONST})
             prev = 1e10
             train_timer = 0.0
             last_loss1 = 1.0

@@ -45,6 +45,7 @@ for i in range(len(li)):
     # targeted
 
     # --use_resize --init_size 64 
+    # --use_grayscale
     # --load_ckpt np/best_modifier_img0.npy 
     
-    os.system('python ../test_attack_black.py -ht pdqhash -c 10 --translateRGB --attack basic -d imagenet --maxiter ' + iteration + ' --reset_adam --start_idx 2 -n 1 -mu 1 -mc 4 --batch 16 --lr ' + lr + ' --solver adam -b 1 -p 1 --hash 32 --method "tanh" --use_resize --init_size 128 --gpu 0 -s target  --dist_metrics "l2dist" --save_ckpts np --seed ' + str(1600 + i))
+    os.system('python ../test_attack_black.py -ht photoDNA -c 1 --translateRGB --attack basic -d imagenet --maxiter ' + iteration + ' --reset_adam --start_idx 0 -n 1 -mu 1 -mc 4 --batch 16 --lr ' + lr + ' --solver adam -b 1 -p 1 --hash 32 --method "tanh" --gpu 0 -s target  --dist_metrics "l2dist" --use_grayscale --save_ckpts np --seed ' + str(1600 + i))
