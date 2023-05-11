@@ -6,8 +6,10 @@ import argparse
 import numpy as np
 import random
 import cv2
+import torch
 
-from setup_imagenet_hash import ImageNet, ImageNet_Hash
+from setup_image_hash import ImageNet, ImageNet_Hash
+from attack_hash import hash_attack
 
 # tensorflow
 import tensorflow.compat.v1 as tf
@@ -18,7 +20,6 @@ from PIL import Image
 # hash
 import imagehash
 import pdqhash
-import robusthash
 
 # perceptual similarity
 from lpips_tensorflow.lpips_tf import lpips
@@ -38,7 +39,7 @@ def main(args):
     with tf.Session(config=config) as sess:
         
         print('Generating data')
-        data, model = ImageNet(), ImageNet_Hash()
+        data, model = ImageNet(), ImageNet_Hash(args['targeted'])
         print('Done...')
 
         print('Using', args['numimg'], 'images')
@@ -71,7 +72,11 @@ def main(args):
             print('input images shape ', input_images.shape)
             print('target image shape ', target_image.shape)
 
-            attack = hash_attack(sess, model)
+            attack = hash_attack(sess, model, args['batch_size'], args['targeted'], args['learning_rate'], args['binary_steps'], args['max_iteration'], args['print_unit'], args['init_const'], args['use_resize'], args['resize_size'], args['use_grayscale'], args['adam_beta1'], args['adam_beta2'], args['mc_sample'], args['multi'], args['optimizer'], args['hash'], args['distance_metric'], input_images.shape[1], input_images.shape[2], input_images.shape[3], target_image.shape[0], target_image.shape[1], target_image.shape[2])
+
+
+
+            attack.attack_batch(input_images, target_image)
         
 
 
@@ -84,15 +89,23 @@ if __name__ == "__main__":
     parser.add_argument("-mu", "--multi", type=int, default=1, help="number of images to attack simultaneously")
     parser.add_argument("-mc", "--mc_sample", type=int, default=2, help="number of samples for Monte Carlo")
     parser.add_argument("-t", "--targeted", action='store_true')
-    parser.add_argument("-h", "--hash", choices=["phash", "pdqhash", "photoDNA"], default="phash")
-    parser.add_argument("-p", "--perceptual_metric", choices=["l2dist", "pdist"], default="l2dist")
+    parser.add_argument("-hash", "--hash", choices=["phash", "pdqhash", "photoDNA"], default="phash")
+    parser.add_argument("-dist", "--distance_metric", choices=["l2dist", "pdist"], default="l2dist")
+    parser.add_argument("--optimizer", choices=["adam"], default="adam")
 
     parser.add_argument("--use_grayscale", action='store_true', help="convert grayscale image")
+    parser.add_argument("--use_resize", action='store_true', help="resize image")
+    parser.add_argument("--resize_size", type=int, default=64, help="size of resized modifier")
+    parser.add_argument("-p", "--print_unit", type=int, default=1, help="print objs every print_unit iterations")
+    parser.add_argument("-c", "--init_const", type=float, default=1.0)
+    parser.add_argument("-bi", "--binary_steps", type=int, default=1)
 
     
     parser.add_argument("--adam_beta1", type=float, default=0.9)
     parser.add_argument("--adam_beta2", type=float, default=0.999)
-    parser.add_argument("-lr", "--learning rate", type=float, default=0.1)
+    parser.add_argument("-lr", "--learning_rate", type=float, default=0.01)
+    parser.add_argument("-b", "--batch_size", type=int, default=128)
+    parser.add_argument("-mi", "--max_iteration", type=int, default=1000)
 
     parser.add_argument("--gpu", "--gpu_machine", default="0")
 
@@ -102,4 +115,8 @@ if __name__ == "__main__":
     
     random.seed(args['seed'])
     np.random.seed(args['seed'])
+
+    
+    print(args)
+    main(args)
 
