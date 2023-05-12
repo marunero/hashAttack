@@ -26,7 +26,7 @@ from ctypes import POINTER
 from ctypes import c_char_p
 
 inputImages_path = "./InputImages/"
-targetImages_path = "C:/Users/sungwoo/Downloads/hashAttack/targetImages/"
+targetImages_path = "./targetImages/"
 
 libPath = './pyPhotoDNA/PhotoDNAx64.dll'
 
@@ -114,7 +114,9 @@ def loss_PDQ(inputs, target, targeted):
 
         differ = ((h1 != h2) * 1).sum()
         
-        a.append(max(0, np.tanh(differ / 256))) 
+        # a.append(max(0, np.tanh(differ / 256))) 
+        a.append(differ)
+        
     
     a = np.asarray(a)
     a = a.astype('float32')
