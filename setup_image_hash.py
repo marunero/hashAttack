@@ -25,7 +25,7 @@ from ctypes import c_ubyte
 from ctypes import POINTER
 from ctypes import c_char_p
 
-inputImages_path = "C:/Users/sungwoo/Downloads/hashAttack/InputImages/"
+inputImages_path = "./InputImages/"
 targetImages_path = "C:/Users/sungwoo/Downloads/hashAttack/targetImages/"
 
 libPath = './pyPhotoDNA/PhotoDNAx64.dll'
