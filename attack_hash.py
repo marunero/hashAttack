@@ -50,13 +50,14 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
             for k in range(mc_sample // 2):
                 c_k = losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k] - losses[j]
                 c_k += losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample - 1) - k] - losses[j]
-                g += c_k * perturbation[k]
+                g += c_k * perturbation[k] * perturbation_const
 
     g /= multi_imgs_num * mc_sample
 
     grad = g
 
     real_modifier += grad * lr
+    real_modifier = np.clip(real_modifier, -1, 1)
 
     return lr
 
