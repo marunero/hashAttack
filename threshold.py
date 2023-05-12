@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import random
 
+from skimage.transform import rescale, resize, downscale_local_mean
 import time
 
 from PIL import Image
@@ -180,6 +181,28 @@ def get_threshold():
         plt.ylabel('frequency')
         plt.show()
 
+# def add_noise_RGB(img, noise):
+#     for width in range(img.shape[0]):
+#         for height in range(img.shape[1]):
+
+            
+def gen_image(arr):
+    fig = np.around((arr+0.5) * 255.0)
+    fig = fig.astype(np.uint8).squeeze()
+    img = Image.fromarray(fig)
+
+    return img
 
 if __name__ == "__main__":
-    get_threshold()
+    img = Image.open("C:/Users/sungwoo/Downloads/imgdata/ILSVRC2012_val_00000004.JPEG")
+    img = np.array(img)
+    img = resize(img,(img.shape[0], img.shape[1], 3), anti_aliasing=True)
+
+    noise = np.load('test_modifier.npy')
+
+    gen_image(noise + img).show()
+
+
+    
+
+

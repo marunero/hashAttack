@@ -42,6 +42,24 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
 
     return lr
 
+@jit(nopython=True)
+def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_const, resized_shape):
+    g = np.zeros((resized_shape))
+    for i in range(batch_size):
+        for j in range(multi_imgs_num):
+            for k in range(mc_sample // 2):
+                c_k = losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k] - losses[j]
+                c_k += losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample - 1) - k] - losses[j]
+                g += c_k * perturbation[k]
+
+    g /= multi_imgs_num * mc_sample
+
+    grad = g
+
+    real_modifier += grad * lr
+
+    return lr
+
 class hash_attack:
     def __init__(self, sess, model, batch_size=1,
                  targeted=True, learning_rate=0.1,
@@ -58,7 +76,6 @@ class hash_attack:
         self.multi_imgs_num = multi_imgs_num
         self.batch_size = batch_size
 
-        self.delta = 0.19999
 
         self.binary_search_steps = binary_search_steps
         self.max_iterations = max_iterations
@@ -103,8 +120,6 @@ class hash_attack:
         self.assign_input_images = tf.placeholder(tf.float32, (self.multi_imgs_num, ) + input_shape) 
         self.assign_target_image = tf.placeholder(tf.float32, target_shape) 
         self.assign_const = tf.placeholder(tf.float32)
-
-
 
         
         l = []
@@ -177,30 +192,66 @@ class hash_attack:
         self.grad = np.zeros(batch_size, dtype = np.float32)
         self.hess = np.zeros(batch_size, dtype = np.float32)
         
-        # if solver == "adam":
-        self.solver = coordinate_ADAM
         
+        self.solver_metric = solver
+        if self.solver_metric == "adam":
+            self.solver = coordinate_ADAM
+        elif self.solver_metric == "momentum":
+            self.solver = momentum
+        self.momentum = 0.5
+        self.perturbation_const = 0.49999 / (255 / 2)
+        self.p = np.array([np.random.normal(loc = 0, scale = 1, size = self.resized_shape) for j in range(self.mc_sample // 2)])
+
+        self.delta = 0.49999 / (mc_sample / 2)
+
         print("Using", solver, "solver")
 
 
     def blackbox_optimizer(self):
         var = np.repeat(self.real_modifier, self.batch_size * self.mc_sample + 1, axis=0)
 
-        var_size = self.real_modifier.size
-        var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False)
 
-        indice = self.var_list[var_indice]
+        # per pixel
 
-        for i in range(self.batch_size):
-            for j in range(self.mc_sample // 2):
-                var[i * self.mc_sample + j + 1].reshape(-1)[indice[i]] += (self.mc_sample // 2 - j) * self.delta
-                var[i * self.mc_sample + self.mc_sample - j].reshape(-1)[indice[i]] -= (self.mc_sample // 2- j) * self.delta
+        if self.solver_metric == 'adam':
+            var_size = self.real_modifier.size
+            var_indice = np.random.choice(self.var_list.size, self.batch_size, replace=False)
+
+            # print("var size = ", var_size)
+            # print("var_indice = ", var_indice)
+
+
+            indice = self.var_list[var_indice]
+
+            # print("indice = ", indice)
+
+            for i in range(self.batch_size):
+                for j in range(self.mc_sample // 2):
+                    var[i * self.mc_sample + j + 1].reshape(-1)[indice[i]] += (self.mc_sample // 2 - j) * self.delta
+                    var[i * self.mc_sample + self.mc_sample - j].reshape(-1)[indice[i]] -= (self.mc_sample // 2- j) * self.delta
+            
+
+            losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
+
+            print(loss1)
+
+            lr = self.solver(losses, indice, self.grad, self.hess, self.batch_size, self.mt, self.vt, self.real_modifier, self.modifier_up, self.modifier_down, self.learning_rate, self.adam_epoch, self.beta1, self.beta2, self.multi_imgs_num, self.mc_sample, self.delta)
+
+        # elif self.solver_metric == 'momentum':
+        else:
+            self.p = np.array([np.random.normal(loc = 0, scale = 1, size = self.resized_shape) for j in range(self.mc_sample // 2)])
+            
+            for i in range(self.batch_size):
+                for j in range(self.mc_sample // 2):
+                    var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const
+                    var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const
+
+            losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
+
+            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_const, self.resized_shape)      
+            print(loss1)     
         
-        losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
 
-        print(loss1)
-
-        lr = self.solver(losses, indice, self.grad, self.hess, self.batch_size, self.mt, self.vt, self.real_modifier, self.modifier_up, self.modifier_down, self.learning_rate, self.adam_epoch, self.beta1, self.beta2, self.multi_imgs_num, self.mc_sample, self.delta)
 
 
         return losses[0:self.multi_imgs_num].sum(), loss1[0:self.multi_imgs_num].sum(), loss2[0:self.multi_imgs_num].sum()
@@ -245,4 +296,4 @@ class hash_attack:
                 # l = self.blackbox_optimizer()
 
 
-        return 
+        return self.real_modifier[0]

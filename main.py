@@ -23,7 +23,12 @@ import pdqhash
 
 # perceptual similarity
 from lpips_tensorflow.lpips_tf import lpips
+def gen_image(arr):
+    fig = np.around((arr+0.5) * 255.0)
+    fig = fig.astype(np.uint8).squeeze()
+    img = Image.fromarray(fig)
 
+    return img
 def main(args):
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # so the IDs match nvidia-smi
     os.environ["CUDA_VISIBLE_DEVICES"] = args['gpu']  # "0,1,2,3".
@@ -76,8 +81,10 @@ def main(args):
 
 
 
-            attack.attack_batch(input_images, target_image)
-        
+            modifier = attack.attack_batch(input_images, target_image)
+
+            np.save('test_modifier', modifier)
+
 
 
 
@@ -91,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--targeted", action='store_true')
     parser.add_argument("-hash", "--hash", choices=["phash", "pdqhash", "photoDNA"], default="phash")
     parser.add_argument("-dist", "--distance_metric", choices=["l2dist", "pdist"], default="l2dist")
-    parser.add_argument("--optimizer", choices=["adam"], default="adam")
+    parser.add_argument("--optimizer", choices=["adam", "momentum"], default="adam")
 
     parser.add_argument("--use_grayscale", action='store_true', help="convert grayscale image")
     parser.add_argument("--use_resize", action='store_true', help="resize image")
