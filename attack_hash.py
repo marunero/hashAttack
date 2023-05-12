@@ -43,14 +43,14 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
     return lr
 
 @jit(nopython=True)
-def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_const, resized_shape):
+def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, resized_shape):
     g = np.zeros((resized_shape))
     for i in range(batch_size):
         for j in range(multi_imgs_num):
             for k in range(mc_sample // 2):
                 c_k = losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k] - losses[j]
                 c_k += losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample - 1) - k] - losses[j]
-                g += c_k * perturbation[k] * perturbation_const
+                g += c_k * perturbation[k] 
 
     g /= multi_imgs_num * mc_sample
 
@@ -189,6 +189,12 @@ class hash_attack:
         self.modifier_up = np.zeros(var_size, dtype = np.float32)
         self.modifier_down = np.zeros(var_size, dtype = np.float32)
 
+
+        self.var_list = np.array(range(0, self.use_var_len), dtype = np.int32)
+        self.up = np.zeros(self.resized_shape, dtype = np.float32)
+        self.down = np.zeros(self.resized_shape, dtype = np.float32)
+
+
         # variables used during optimization process
         self.grad = np.zeros(batch_size, dtype = np.float32)
         self.hess = np.zeros(batch_size, dtype = np.float32)
@@ -200,7 +206,9 @@ class hash_attack:
         elif self.solver_metric == "momentum":
             self.solver = momentum
         self.momentum = 0.5
-        self.perturbation_const = 0.49999 / (255 / 2)
+
+        self.normal_scale = 0.05
+        
         self.p = np.array([np.random.normal(loc = 0, scale = 1, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
         self.delta = 0.49999 / (mc_sample / 2)
@@ -240,16 +248,18 @@ class hash_attack:
 
         # elif self.solver_metric == 'momentum':
         else:
-            self.p = np.array([np.random.normal(loc = 0, scale = 1, size = self.resized_shape) for j in range(self.mc_sample // 2)])
+            self.p = np.array([np.random.normal(loc = 0, scale = self.normal_scale, size = self.resized_shape) for j in range(self.mc_sample // 2)])
+
+            self.p = np.clip(self.p, self.down, self.up)
             
             for i in range(self.batch_size):
                 for j in range(self.mc_sample // 2):
-                    var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const
-                    var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const
+                    var[i * self.mc_sample + j + 1] += self.p[j]
+                    var[i * self.mc_sample + self.mc_sample - j] -= self.p[j]
 
             losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
 
-            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_const, self.resized_shape)      
+            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.resized_shape)      
             print(loss1)     
         
 
@@ -264,6 +274,8 @@ class hash_attack:
 
         self.modifier_up = 0.5 - input_images[0].reshape(-1)
         self.modifier_down = -0.5 - input_images[0].reshape(-1)
+        self.up = 0.5 - np.max(input_images, axis=0)
+        self.down = -0.5 - np.min(input_images, axis=0)
 
         for binary_step in range(self.binary_search_steps):
             self.sess.run(self.setup, {self.assign_input_images: input_images, self.assign_target_image: target_image, self.assign_const: CONST})
