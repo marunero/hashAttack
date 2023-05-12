@@ -54,9 +54,10 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
 
     g /= multi_imgs_num * mc_sample
 
-    grad = 0.5 * grad + 0.5 * g
+    # grad = 0.5 * grad + 0.5 * g
+    grad = g
 
-    real_modifier += (grad * lr / max(grad)) / scale
+    real_modifier += (grad * lr / np.max(grad)) * scale
     real_modifier = np.clip(real_modifier, down, up)
 
     return lr
@@ -112,7 +113,7 @@ class hash_attack:
             # no resize
             self.scaled_modifier = self.modifier
 
-        self.real_modifier = np.zeros((1, ) + self.resized_shape, dtype=np.float32)
+        self.real_modifier = np.zeros((1, ) + self.resized_shape, dtype=np.float64)
 
         self.input_images = tf.Variable(np.zeros((self.multi_imgs_num, ) + input_shape), dtype=tf.float32) 
         self.target_image = tf.Variable(np.zeros(target_shape), dtype=tf.float32)
@@ -259,7 +260,7 @@ class hash_attack:
 
             losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
 
-            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.resized_shape, self.down, self.up, self.normal_scale)      
+            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.resized_shape, self.down.reshape((1, ) + self.resized_shape), self.up.reshape((1, ) + self.resized_shape), self.normal_scale)      
             print(loss1)
 
         return losses[0:self.multi_imgs_num].sum(), loss1[0:self.multi_imgs_num].sum(), loss2[0:self.multi_imgs_num].sum()
