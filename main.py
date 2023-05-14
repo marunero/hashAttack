@@ -23,8 +23,9 @@ import pdqhash
 
 # perceptual similarity
 from lpips_tensorflow.lpips_tf import lpips
+
 def gen_image(arr):
-    fig = np.around((arr+0.5) * 255.0)
+    fig = np.around((arr) * 255.0)
     fig = fig.astype(np.uint8).squeeze()
     img = Image.fromarray(fig)
 

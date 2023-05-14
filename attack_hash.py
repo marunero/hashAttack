@@ -272,8 +272,8 @@ class hash_attack:
 
         self.modifier_up = 0.5 - input_images[0].reshape(-1)
         self.modifier_down = -0.5 - input_images[0].reshape(-1)
-        self.up = 0.5 - np.max(input_images, axis=0)
-        self.down = -0.5 - np.min(input_images, axis=0)
+        self.up = 1 - np.max(input_images, axis=0)
+        self.down = 0 - np.min(input_images, axis=0)
 
         for binary_step in range(self.binary_search_steps):
             self.sess.run(self.setup, {self.assign_input_images: input_images, self.assign_target_image: target_image, self.assign_const: CONST})

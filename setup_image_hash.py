@@ -134,8 +134,7 @@ def read_inputImage(ff):
   img = resize(img,(img.shape[0], img.shape[1], 3), anti_aliasing=True)
   gray_img = resize(gray_img,(gray_img.shape[0],gray_img.shape[1], 1), anti_aliasing=True)
 
-  gray_img = gray_img - 0.5
-  img = img - 0.5
+
 
   return [img, gray_img]
 
@@ -157,7 +156,7 @@ class ImageNet:
         img = Image.open(f)
         img = np.array(img)
         img = resize(img, (img.shape[0], img.shape[1], 3), anti_aliasing = True)
-        img -= 0.5
+
         target_data.append(img)
 
     self.input_images_rgb = np.array(input_images_rgb)
