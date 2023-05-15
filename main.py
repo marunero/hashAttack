@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--gpu", "--gpu_machine", default="0")
 
-    parser.add_argument("--seed", type=int, default=1329)
+    parser.add_argument("--seed", type=int, default=1359)
     args = vars(parser.parse_args())
 
     
