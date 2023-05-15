@@ -288,6 +288,9 @@ class hash_attack:
         self.modifier_up = 0.5 - input_images[0].reshape(-1)
         self.modifier_down = -0.5 - input_images[0].reshape(-1)
 
+        loss_x = []
+        loss_y = []
+
         for binary_step in range(self.binary_search_steps):
             self.sess.run(self.setup, {self.assign_input_images: input_images, self.assign_target_image: target_image, self.assign_const: CONST})
 
@@ -314,10 +317,16 @@ class hash_attack:
 
                 l, loss1, loss2 = self.blackbox_optimizer()
 
+                # PhotoDNA threshold
+                if loss1 <= 2000:
+                    break
+
+                loss_x.append(iteration)
+                loss_y.append(l)
 
                 # optimize_start = time.time()
 
                 # l = self.blackbox_optimizer()
 
 
-        return self.real_modifier[0]
+        return self.real_modifier[0], loss_x, loss_y

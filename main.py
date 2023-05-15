@@ -8,6 +8,8 @@ import random
 import cv2
 import torch
 from matplotlib import pyplot as plt
+import datetime
+
 
 from setup_image_hash import ImageNet, ImageNet_Hash
 from attack_hash import hash_attack
@@ -88,7 +90,7 @@ def main(args):
             gen_image(input_images[0] + modifier).save("test.png")
 
             plt.plot(loss_x, loss_y)
-            plt.show()
+            plt.savefig(str(i) + '.png')
 
 
 
