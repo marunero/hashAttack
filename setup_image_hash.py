@@ -25,8 +25,8 @@ from ctypes import c_ubyte
 from ctypes import POINTER
 from ctypes import c_char_p
 
-inputImages_path = "C:/Users/sungwoo/Downloads/hashAttack/InputImages/"
-targetImages_path = "C:/Users/sungwoo/Downloads/hashAttack/targetImages/"
+inputImages_path = "./InputImages/"
+targetImages_path = "./targetImages/"
 
 libPath = './pyPhotoDNA/PhotoDNAx64.dll'
 
@@ -114,7 +114,9 @@ def loss_PDQ(inputs, target, targeted):
 
         differ = ((h1 != h2) * 1).sum()
         
-        a.append(max(0, np.tanh(differ / 256))) 
+        # a.append(max(0, np.tanh(differ / 256))) 
+        a.append(differ)
+        
     
     a = np.asarray(a)
     a = a.astype('float32')
@@ -132,8 +134,7 @@ def read_inputImage(ff):
   img = resize(img,(img.shape[0], img.shape[1], 3), anti_aliasing=True)
   gray_img = resize(gray_img,(gray_img.shape[0],gray_img.shape[1], 1), anti_aliasing=True)
 
-  gray_img = gray_img - 0.5
-  img = img - 0.5
+
 
   return [img, gray_img]
 
@@ -155,7 +156,7 @@ class ImageNet:
         img = Image.open(f)
         img = np.array(img)
         img = resize(img, (img.shape[0], img.shape[1], 3), anti_aliasing = True)
-        img -= 0.5
+
         target_data.append(img)
 
     self.input_images_rgb = np.array(input_images_rgb)

@@ -23,8 +23,9 @@ import pdqhash
 
 # perceptual similarity
 from lpips_tensorflow.lpips_tf import lpips
+
 def gen_image(arr):
-    fig = np.around((arr+0.5) * 255.0)
+    fig = np.around((arr) * 255.0)
     fig = fig.astype(np.uint8).squeeze()
     img = Image.fromarray(fig)
 
@@ -83,7 +84,7 @@ def main(args):
 
             modifier = attack.attack_batch(input_images, target_image)
 
-            np.save('test_modifier', modifier)
+            gen_image(input_images[0] + modifier).save("test.png")
 
 
 
@@ -116,7 +117,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--gpu", "--gpu_machine", default="0")
 
-    parser.add_argument("--seed", type=int, default=1307)
+    parser.add_argument("--seed", type=int, default=1306)
     args = vars(parser.parse_args())
 
     
