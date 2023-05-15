@@ -43,27 +43,43 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
     return lr
 
 @jit(nopython=True)
-def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape):
+def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape, down, up):
     g = np.zeros((resized_shape))
+    plus = 0
+    minus = 0
+    c_k = 0
     for i in range(batch_size):
         for j in range(multi_imgs_num):
             for k in range(mc_sample // 2):
-                c_k = losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k] - losses[j]
-                c_k += losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample - 1) - k] - losses[j]
-                g += c_k * perturbation[k] * perturbation_pixel
+                plus = losses[j] - losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k]
+                minus = losses[j] - losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample - 1) - k]
+
+                if plus < 0 and minus < 0:
+                    c_k = 0
+                elif plus > 0 and minus > 0:
+                    if plus >= minus:
+                        c_k = plus
+                    else:
+                        c_k = - minus
+                else:
+                    if plus < minus:
+                        c_k = - minus - plus
+                    else:
+                        c_k = plus - minus
+                g += c_k * perturbation[k]
 
     g /= multi_imgs_num * mc_sample
 
     # add momentum
-    grad = 0.5 * grad + 0.5 * g
+    grad = g
 
     # normalization
-    grad = grad / np.sum(grad ** 2)
+    grad = grad / np.sum(grad ** 2) 
 
-    real_modifier += grad * lr
+    real_modifier += grad * lr * perturbation_pixel
     real_modifier = np.clip(real_modifier, -1, 1)
 
-    return lr
+    return lr, grad 
 
 class hash_attack:
     def __init__(self, sess, model, batch_size=1,
@@ -158,9 +174,9 @@ class hash_attack:
         self.loss2 = self.l2dist
 
 
-        self.loss1 = self.output1 * self.const
+        self.loss1 = self.output1 
 
-        self.loss = self.loss1 + self.loss2 
+        self.loss = self.loss1 + self.loss2 * self.const
 
 
         # these are the variables to initialize when we run
@@ -193,6 +209,9 @@ class hash_attack:
         self.modifier_up = np.zeros(var_size, dtype = np.float32)
         self.modifier_down = np.zeros(var_size, dtype = np.float32)
 
+        self.up = np.zeros(self.resized_shape, dtype=np.float32)
+        self.down = np.zeros(self.resized_shape, dtype=np.float32)
+
         # variables used during optimization process
         self.grad = np.zeros(batch_size, dtype = np.float32)
         self.hess = np.zeros(batch_size, dtype = np.float32)
@@ -204,8 +223,8 @@ class hash_attack:
         elif self.solver_metric == "momentum":
             self.solver = momentum
         self.momentum = 0.5
-        self.perturbation_pixel = 1 / 255
-        self.perturbation_const = 5
+        self.perturbation_pixel = 0.004
+        self.perturbation_const = 10
         self.p = np.array([np.random.normal(loc = 0, scale = 1, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
         self.delta = 0.49999 / (mc_sample / 2)
@@ -245,17 +264,22 @@ class hash_attack:
 
         # elif self.solver_metric == 'momentum':
         else:
-            self.p = np.array([np.random.normal(loc = 0, scale = 1, size = self.resized_shape) for j in range(self.mc_sample // 2)])
+            self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
+
+            self.p = np.clip(self.p, self.down, self.up)
 
             for i in range(self.batch_size):
                 for j in range(self.mc_sample // 2):
-                    var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const * self.perturbation_pixel
-                    var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const * self.perturbation_pixel
+                    var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const
+                    var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const
 
             losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
 
-            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape)      
-            print(loss1)     
+            lr, self.grad = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape, self.down, self.up)      
+            print(losses)
+            # print(loss1)     
+            # print(loss2)
+            print(self.grad.max(), self.grad.min())
 
 
 
@@ -269,6 +293,9 @@ class hash_attack:
 
         self.modifier_up = 0.5 - input_images[0].reshape(-1)
         self.modifier_down = -0.5 - input_images[0].reshape(-1)
+
+        self.up = 1 - np.max(input_images, axis=0)
+        self.down = 0 - np.min(input_images, axis=0)
 
         for binary_step in range(self.binary_search_steps):
             self.sess.run(self.setup, {self.assign_input_images: input_images, self.assign_target_image: target_image, self.assign_const: CONST})
@@ -284,7 +311,8 @@ class hash_attack:
             self.adam_epoch.fill(1)
 
 
-
+            loss_y = []
+            loss_x = []
             for iteration in range(self.max_iterations):
                 loss, loss1, loss2 = self.sess.run((self.loss,self.loss1,self.loss2), feed_dict={self.modifier: self.real_modifier})
 
@@ -296,10 +324,11 @@ class hash_attack:
 
                 l, loss1, loss2 = self.blackbox_optimizer()
 
-
+                loss_y.append(l)
+                loss_x.append(iteration)
                 # optimize_start = time.time()
 
                 # l = self.blackbox_optimizer()
 
 
-        return self.real_modifier[0]
+        return self.real_modifier[0], loss_x, loss_y

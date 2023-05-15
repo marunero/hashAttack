@@ -7,6 +7,7 @@ import numpy as np
 import random
 import cv2
 import torch
+from matplotlib import pyplot as plt
 
 from setup_image_hash import ImageNet, ImageNet_Hash
 from attack_hash import hash_attack
@@ -82,9 +83,12 @@ def main(args):
 
 
 
-            modifier = attack.attack_batch(input_images, target_image)
+            modifier, loss_x, loss_y = attack.attack_batch(input_images, target_image)
 
             gen_image(input_images[0] + modifier).save("test.png")
+
+            plt.plot(loss_x, loss_y)
+            plt.show()
 
 
 
@@ -105,7 +109,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_resize", action='store_true', help="resize image")
     parser.add_argument("--resize_size", type=int, default=64, help="size of resized modifier")
     parser.add_argument("-p", "--print_unit", type=int, default=1, help="print objs every print_unit iterations")
-    parser.add_argument("-c", "--init_const", type=float, default=1.0)
+    parser.add_argument("-c", "--init_const", type=float, default=0.0001)
     parser.add_argument("-bi", "--binary_steps", type=int, default=1)
 
     
@@ -117,7 +121,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--gpu", "--gpu_machine", default="0")
 
-    parser.add_argument("--seed", type=int, default=1306)
+    parser.add_argument("--seed", type=int, default=1329)
     args = vars(parser.parse_args())
 
     
