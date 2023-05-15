@@ -198,7 +198,7 @@ if __name__ == "__main__":
     img = np.array(img)
     img = resize(img,(img.shape[0], img.shape[1], 3), anti_aliasing=True)
 
-    noise = np.load('test_modifier.npy') / 3
+    noise = np.load('test_modifier.npy') 
 
     gen_image(noise + img).show()
 

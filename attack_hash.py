@@ -43,14 +43,14 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
     return lr
 
 @jit(nopython=True)
-def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_const, resized_shape):
+def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape):
     g = np.zeros((resized_shape))
     for i in range(batch_size):
         for j in range(multi_imgs_num):
             for k in range(mc_sample // 2):
                 c_k = losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k] - losses[j]
                 c_k += losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample - 1) - k] - losses[j]
-                g += c_k * perturbation[k] * perturbation_const
+                g += c_k * perturbation[k] * perturbation_pixel
 
     g /= multi_imgs_num * mc_sample
 
@@ -200,7 +200,8 @@ class hash_attack:
         elif self.solver_metric == "momentum":
             self.solver = momentum
         self.momentum = 0.5
-        self.perturbation_const = 0.49999 / (255 / 2)
+        self.perturbation_pixel = 1 / 255
+        self.perturbation_const = 5
         self.p = np.array([np.random.normal(loc = 0, scale = 1, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
         self.delta = 0.49999 / (mc_sample / 2)
@@ -244,12 +245,12 @@ class hash_attack:
             
             for i in range(self.batch_size):
                 for j in range(self.mc_sample // 2):
-                    var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const
-                    var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const
+                    var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const * self.perturbation_pixel
+                    var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const * self.perturbation_pixel
 
             losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
 
-            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_const, self.resized_shape)      
+            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape)      
             print(loss1)     
         
 
