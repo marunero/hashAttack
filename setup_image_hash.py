@@ -31,7 +31,7 @@ targetImages_path = "./targetImages/"
 libPath = './pyPhotoDNA/PhotoDNAx64.dll'
 
 def gen_image(arr):
-    fig = np.around((arr+0.5) * 255.0)
+    fig = np.around((arr) * 255.0)
     fig = fig.astype(np.uint8).squeeze()
     img = Image.fromarray(fig)
 
