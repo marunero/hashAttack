@@ -57,15 +57,16 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
             for k in range(mc_sample // 2):
                 a = losses[j] - losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + k]
                 b = losses[j] - losses[multi_imgs_num + (j * mc_sample * batch_size) + (i * mc_sample) + (mc_sample - 1) - k]
+
                 if a > 0 and b > 0:
                     if a > b:
                         g += (a) * perturbation[k] * perturbation_pixel
                     else:
                         g += (-b) * perturbation[k] * perturbation_pixel
-                elif a > 0:
-                    g += (a) * perturbation[k] * perturbation_pixel
-                elif b > 0:
-                    g += (-b) * perturbation[k] * perturbation_pixel
+                else:
+                    g += (a - b) * perturbation[k] * perturbation_pixel
+                
+                # g += (a - b) * perturbation[k] * perturbation_pixel
 
 
     g /= multi_imgs_num * mc_sample
@@ -173,12 +174,12 @@ class hash_attack:
             l2 = tf.concat([l2, self.scaled_modifier[1:self.batch_size * self.mc_sample + 1]], axis=0)
         self.l2dist = tf.reduce_sum(tf.square(l2), [1,2,3])
 
-        self.loss2 = self.l2dist * self.const
+        self.loss2 = self.l2dist
 
 
         self.loss1 = self.output1
 
-        self.loss = self.loss1 + self.loss2 
+        self.loss = self.loss1 + self.loss2 * self.const
 
 
         # these are the variables to initialize when we run
@@ -318,11 +319,19 @@ class hash_attack:
                 l, loss1, loss2 = self.blackbox_optimizer()
 
                 # PhotoDNA threshold
-                if loss1 <= 2000:
-                    break
+                if self.hash_metric == "photoDNA":
+                    threshold = 2000
+                elif self.hash_metric == "pdqhash":
+                    threshold = 45
+                else: # phash, etc.
+                    threshold = 0
 
                 loss_x.append(iteration)
                 loss_y.append(l)
+                
+                if loss1 <= threshold:
+                    break
+
 
                 # optimize_start = time.time()
 

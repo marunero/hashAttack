@@ -90,7 +90,9 @@ def main(args):
             gen_image(input_images[0] + modifier).save("test.png")
 
             plt.plot(loss_x, loss_y)
-            plt.savefig(str(i) + '.png')
+            plt.savefig(str(i) + '_' + str(args['learning_rate']) + '.png')
+            plt.clf()
+
 
 
 
