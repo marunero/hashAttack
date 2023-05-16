@@ -71,8 +71,8 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
     g /= multi_imgs_num * mc_sample
 
     # add momentum
-    # grad = 0.5 * grad + 0.5 * g 
-    grad = g
+    grad = 0.4 * grad + 0.6 * g 
+    # grad = g
 
     # normalization
     if np.sum(grad ** 2) != 0:
@@ -223,7 +223,7 @@ class hash_attack:
             self.solver = momentum
         self.momentum = 0.5
         self.perturbation_pixel = 0.004
-        self.perturbation_const = 5
+        self.perturbation_const = 10
         self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
         self.delta = 0.49999 / (mc_sample / 2)
