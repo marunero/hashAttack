@@ -32,7 +32,6 @@ import pdqhash
 from lpips_tensorflow.lpips_tf import lpips
 
 def gen_image(arr):
-    arr = np.clip(arr, 0, 1)
     fig = np.around((arr) * 255.0)
     fig = fig.astype(np.uint8).squeeze()
     img = Image.fromarray(fig)

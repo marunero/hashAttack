@@ -44,7 +44,7 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
 
 
 def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape):
-    g = np.zeros((resized_shape))
+    g = np.zeros((resized_shape), dtype=np.float32)
     # for i in range(batch_size):
     #     for j in range(multi_imgs_num):
     #         for k in range(mc_sample // 2):
@@ -72,7 +72,7 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
     g /= multi_imgs_num * mc_sample
 
     # add momentum
-    grad = 0.5 * grad + 0.5 * g 
+    grad = 0.4999 * grad + 0.5001 * g 
     # grad = g
 
     # normalization
@@ -223,6 +223,8 @@ class hash_attack:
         # variables used during optimization process
         self.grad = np.zeros(batch_size, dtype = np.float32)
         self.hess = np.zeros(batch_size, dtype = np.float32)
+        self.up = np.zeros(self.resized_shape, dtype = np.float32)
+        self.down = np.zeros(self.resized_shape, dtype = np.float32)
 
 
         self.solver_metric = solver
@@ -274,6 +276,8 @@ class hash_attack:
         else:
             self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
+            self.p = np.clip(self.p, self.down, self.up)
+
             for i in range(self.batch_size):
                 for j in range(self.mc_sample // 2):
                     var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const
@@ -297,6 +301,8 @@ class hash_attack:
         self.modifier_up = 0.5 - input_images[0].reshape(-1)
         self.modifier_down = -0.5 - input_images[0].reshape(-1)
 
+        self.up = 1 - np.max(input_images, axis=0)
+        self.down = 0 - np.min(input_images, axis=0)
         
         best_loss_x = []
         best_loss_y = []
