@@ -43,7 +43,7 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
     return lr
 
 
-def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape):
+def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape, up, down):
     g = np.zeros((resized_shape), dtype=np.float32)
     # for i in range(batch_size):
     #     for j in range(multi_imgs_num):
@@ -80,7 +80,7 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
         grad = grad / np.sum(grad ** 2)
 
     real_modifier += grad * lr * perturbation_pixel
-    real_modifier = np.clip(real_modifier, -1, 1)
+    real_modifier = np.clip(real_modifier, down, up)
 
     return lr
 
@@ -285,7 +285,7 @@ class hash_attack:
 
             losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
  
-            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape)      
+            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape, self.up, self.down)      
             print(losses)     
 
 
