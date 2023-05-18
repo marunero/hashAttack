@@ -72,7 +72,7 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
     g /= multi_imgs_num * mc_sample
 
     # add momentum
-    grad = 0.4 * grad + 0.6 * g 
+    grad = 0.5 * grad + 0.5 * g 
     # grad = g
 
     # normalization
@@ -111,6 +111,14 @@ class hash_attack:
 
         self.hash_metric = hash_metric
         self.dist_metric = dist_metric
+
+        # PhotoDNA threshold
+        if self.hash_metric == "photoDNA":
+            self.threshold = 2000
+        elif self.hash_metric == "pdqhash":
+            self.threshold = 45
+        else: # phash, etc.
+            self.threshold = 0
 
         self.use_resize = use_resize
 
@@ -272,7 +280,7 @@ class hash_attack:
                     var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const
 
             losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
-
+ 
             lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape)      
             print(losses)     
 
@@ -289,8 +297,10 @@ class hash_attack:
         self.modifier_up = 0.5 - input_images[0].reshape(-1)
         self.modifier_down = -0.5 - input_images[0].reshape(-1)
 
-        loss_x = []
-        loss_y = []
+        
+        best_loss_x = []
+        best_loss_y = []
+        success = False
 
         for binary_step in range(self.binary_search_steps):
             self.sess.run(self.setup, {self.assign_input_images: input_images, self.assign_target_image: target_image, self.assign_const: CONST})
@@ -304,8 +314,13 @@ class hash_attack:
             self.mt.fill(0.0)
             self.vt.fill(0.0)
             self.adam_epoch.fill(1)
+        
+            self.grad.fill(0.0)
 
+            loss_x = []
+            loss_y = []
 
+            start_time = time.time()
 
             for iteration in range(self.max_iterations):
                 loss, loss1, loss2 = self.sess.run((self.loss,self.loss1,self.loss2), feed_dict={self.modifier: self.real_modifier})
@@ -313,29 +328,31 @@ class hash_attack:
                 if iteration % (self.print_unit) == 0:
                     print("[STATS] iter = {}, time = {:.3f}, modifier shape = {}, loss = {:.5g}, loss1 = {:.5g}, loss2 = {:.5g}".format(iteration, train_timer, self.real_modifier.shape, loss[0:self.multi_imgs_num].sum(), loss1[0:self.multi_imgs_num].sum(), loss2[0:self.multi_imgs_num].sum()))
                     sys.stdout.flush()
-
-                attack_begin_time = time.time()
-
-                l, loss1, loss2 = self.blackbox_optimizer()
-
-                # PhotoDNA threshold
-                if self.hash_metric == "photoDNA":
-                    threshold = 2000
-                elif self.hash_metric == "pdqhash":
-                    threshold = 45
-                else: # phash, etc.
-                    threshold = 0
-
+                
                 loss_x.append(iteration)
                 loss_y.append(l)
                 
-                if loss1 <= threshold:
+                if loss1 <= self.threshold:
+                    success = True
+
+
+                    best_loss_x = loss_x
+                    best_loss_y = loss_y
+                    
                     break
 
+                l, loss1, loss2 = self.blackbox_optimizer()
 
-                # optimize_start = time.time()
+                end_time = time.time()
+
+                train_timer += end_time - start_time
 
                 # l = self.blackbox_optimizer()
+
+                if success == True:
+                    continue
+                else:
+                    continue 
 
 
         return self.real_modifier[0], loss_x, loss_y

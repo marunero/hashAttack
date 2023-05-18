@@ -3,7 +3,13 @@ import time
 path = os.getcwd()
 os.system('cd {}'.format(os.getcwd()))
 
-for i in range(1, 2):
-    lr = 0.5
 
-    os.system('python main.py -i 15 -n 4 -mu 1 -mc 32 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr ' + str(lr * i) + ' -mi 8000')
+# --use_resize --resize_size 64 
+
+lr = 0.02
+for i in range(10):
+    
+    os.system('python main.py -i 17 -n 2 -mu 1 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr ' + str(lr) + ' -mi 20000')
+
+    lr *= 2
+

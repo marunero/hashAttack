@@ -8,7 +8,10 @@ import random
 import cv2
 import torch
 from matplotlib import pyplot as plt
-import datetime
+from datetime import datetime
+
+
+from skimage.transform import resize
 
 
 from setup_image_hash import ImageNet, ImageNet_Hash
@@ -16,6 +19,7 @@ from attack_hash import hash_attack
 
 # tensorflow
 import tensorflow.compat.v1 as tf
+
 
 # image
 from PIL import Image
@@ -28,6 +32,7 @@ import pdqhash
 from lpips_tensorflow.lpips_tf import lpips
 
 def gen_image(arr):
+    arr = np.clip(arr, 0, 1)
     fig = np.around((arr) * 255.0)
     fig = fig.astype(np.uint8).squeeze()
     img = Image.fromarray(fig)
@@ -39,7 +44,7 @@ def main(args):
     
     
     config = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True)
-    
+
     #Don't pre-allocate memory; allocate as-needed
     config.gpu_options.allow_growth = True
     #Only allow a total of half the GPU memory to be allocated
@@ -87,10 +92,26 @@ def main(args):
 
             modifier, loss_x, loss_y = attack.attack_batch(input_images, target_image)
 
-            gen_image(input_images[0] + modifier).save("test.png")
+            if args['use_resize'] == True:
+                copy_modifier = np.zeros(modifier.shape, dtype=np.float32)
+                
+                for i in range(modifier.shape[0]):
+                    for j in range(modifier.shape[1]):
+                        for k in range(modifier.shape[2]):
+                            copy_modifier[i][j][k] = modifier[i][j][k]
 
-            plt.plot(loss_x, loss_y)
-            plt.savefig(str(i) + '_' + str(args['learning_rate']) + '.png')
+                copy_modifier = resize(copy_modifier, (input_images[0].shape), anti_aliasing=False, preserve_range=True)
+
+                gen_image(input_images[0] + copy_modifier).save('test.png')
+            else:
+                gen_image(input_images[0] + modifier).save("test.png")
+
+            plt.plot(loss_x, loss_y) 
+
+            now = datetime.now()
+            data_time = now.strftime("%m_%d_%H_%M")
+
+            plt.savefig(data_time + '_' + str(i) + '.png')
             plt.clf()
 
 
@@ -125,7 +146,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--gpu", "--gpu_machine", default="0")
 
-    parser.add_argument("--seed", type=int, default=1359)
+    parser.add_argument("--seed", type=int, default=1239)
     args = vars(parser.parse_args())
 
     
