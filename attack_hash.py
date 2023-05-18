@@ -355,4 +355,4 @@ class hash_attack:
                     continue 
 
 
-        return self.real_modifier[0], loss_x, loss_y
+        return self.real_modifier[0], best_loss_x, best_loss_y
