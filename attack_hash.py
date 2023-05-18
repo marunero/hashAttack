@@ -341,11 +341,10 @@ class hash_attack:
                 if loss1 <= self.threshold:
                     success = True
 
-
-                    best_loss_x = loss_x
-                    best_loss_y = loss_y
-                    
                     break
+
+                
+                    
 
                 l, loss1, loss2 = self.blackbox_optimizer()
 
@@ -359,6 +358,6 @@ class hash_attack:
                     continue
                 else:
                     continue 
+                    
 
-
-        return self.real_modifier[0], best_loss_x, best_loss_y
+        return self.real_modifier[0], loss_x, loss_y
