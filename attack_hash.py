@@ -330,7 +330,7 @@ class hash_attack:
                     sys.stdout.flush()
                 
                 loss_x.append(iteration)
-                loss_y.append(l)
+                loss_y.append(loss)
                 
                 if loss1 <= self.threshold:
                     success = True
