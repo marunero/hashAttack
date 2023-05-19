@@ -89,7 +89,7 @@ class hash_attack:
                  targeted=True, learning_rate=0.1,
                  binary_search_steps=1, max_iterations=4000, print_unit=1,
                  initial_loss_const=1, use_resize=False, resize_size=32, use_grayscale=False, 
-                 adam_beta1=0.99, adam_beta2=0.9999, mc_sample = 2, multi_imgs_num=1, 
+                 adam_beta1=0.99, adam_beta2=0.9999, mc_sample = 2, multi_imgs_num=1, perturbation_const=10,
                  solver="adam", hash_metric="phash",
                  dist_metric="l2dist", input_x=288, input_y=288, input_c=1, target_x=288, target_y=288, target_c=3):
         self.sess = sess
@@ -234,7 +234,7 @@ class hash_attack:
             self.solver = momentum
         self.momentum = 0.5
         self.perturbation_pixel = 0.004
-        self.perturbation_const = 10
+        self.perturbation_const = perturbation_const
         self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
         self.delta = 0.49999 / (mc_sample / 2)
