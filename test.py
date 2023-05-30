@@ -25,7 +25,7 @@ import math
 import cv2
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from PIL import Image
 from skimage.io import imread
@@ -84,3 +84,23 @@ h1 = generatePhotoDNAHash(img1)
 h2 = generatePhotoDNAHash(img2)
 
 print(PhotoDNA_Distance(h1, h2))
+
+# img2 = np.array(img2)
+# img2 = resize(img2,(img2.shape[0], img2.shape[1], 3), anti_aliasing=True)
+# img2 -= 0.5
+# modified_array2 = np.tanh(img2) / 2
+# scaled_array2 = (modified_array2 + 0.5) * 255
+# scaled_array2 = scaled_array2.astype(np.uint8)
+# modified_img2 = Image.fromarray(scaled_array2)
+# modified_img2.save('../test/modified_image2.png')
+
+
+
+# img1 = np.array(img1)
+# img1 = resize(img1,(img1.shape[0], img1.shape[1], 3), anti_aliasing=True)
+# img1 -= 0.5
+# modified_array1 = np.tanh(img1) / 2
+# scaled_array1 = (modified_array1 + 0.5) * 255
+# scaled_array1 = scaled_array1.astype(np.uint8)
+# modified_img1 = Image.fromarray(scaled_array1)
+# modified_img1.save('../test/modified_image1.png')

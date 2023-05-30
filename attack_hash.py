@@ -42,7 +42,7 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
 
     return lr
 
-
+@jit(nopython=True)
 def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape, up, down):
     g = np.zeros((resized_shape), dtype=np.float32)
     # for i in range(batch_size):
@@ -80,7 +80,7 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
         grad = grad / np.sum(grad ** 2)
 
     real_modifier += grad * lr * perturbation_pixel
-    real_modifier = np.clip(real_modifier, down, up)
+    # real_modifier = np.clip(real_modifier, down, up)
 
     return lr
 
@@ -88,7 +88,7 @@ class hash_attack:
     def __init__(self, sess, model, batch_size=1,
                  targeted=True, learning_rate=0.1,
                  binary_search_steps=1, max_iterations=4000, print_unit=1,
-                 initial_loss_const=1, use_resize=False, resize_size=32, use_grayscale=False, 
+                 initial_loss_const=1, use_tanh=True, use_resize=False, resize_size=32, use_grayscale=False, 
                  adam_beta1=0.99, adam_beta2=0.9999, mc_sample = 2, multi_imgs_num=1, perturbation_const=10,
                  solver="adam", hash_metric="phash",
                  dist_metric="l2dist", input_x=288, input_y=288, input_c=1, target_x=288, target_y=288, target_c=3):
@@ -114,13 +114,14 @@ class hash_attack:
 
         # PhotoDNA threshold
         if self.hash_metric == "photoDNA":
-            self.threshold = 2000
+            self.threshold = 1800
         elif self.hash_metric == "pdqhash":
-            self.threshold = 45
+            self.threshold = 90
         else: # phash, etc.
             self.threshold = 0
 
         self.use_resize = use_resize
+        self.use_tanh = use_tanh
 
         self.resized_x = input_x
         self.resized_y = input_y
@@ -142,6 +143,8 @@ class hash_attack:
             self.modifier = tf.placeholder(tf.float32, shape=(None, input_x, input_y, input_c))
             # no resize
             self.scaled_modifier = self.modifier
+        
+        # self.scaled_modifier = tf.tanh(self.scaled_modifier)
 
         self.real_modifier = np.zeros((1, ) + self.resized_shape, dtype=np.float32)
 
@@ -162,17 +165,10 @@ class hash_attack:
         for i in range(self.input_images.shape[0]):
             s = self.scaled_modifier + self.input_images[i]
             l = tf.concat([l, s[1:self.batch_size * self.mc_sample + 1]], axis=0)
-
         self.newimg = l
-
-        if self.hash_metric == "phash":
-            self.output1 = model.get_loss_phash(self.newimg, self.target_image)
-        elif self.hash_metric == "pdqhash":
-            self.output1 = model.get_loss_pdq(self.newimg, self.target_image)
-        elif self.hash_metric == "photoDNA":
-            self.output1 = model.get_loss_photoDNA(self.newimg, self.target_image)
-        else:
-            self.output1 = model.get_loss_photoDNA(self.newimg, self.target_image)
+        self.output1 = model.get_loss(self.newimg, self.target_image, self.hash_metric)
+        
+        self.loss1 = self.output1
 
         # if self.dist_metrics == "l2dist": 
         l2 = []
@@ -180,12 +176,13 @@ class hash_attack:
             l2.append(self.scaled_modifier[0])
         for i in range(self.input_images.shape[0]):
             l2 = tf.concat([l2, self.scaled_modifier[1:self.batch_size * self.mc_sample + 1]], axis=0)
-        self.l2dist = tf.reduce_sum(tf.square(l2), [1,2,3])
 
+        if self.use_tanh == True:
+            self.l2dist = tf.reduce_sum(tf.square(tf.tanh(l2) / 2), [1, 2, 3])
+        else:
+            self.l2dist = tf.reduce_sum(tf.square(l2), [1, 2, 3])
         self.loss2 = self.l2dist
 
-
-        self.loss1 = self.output1
 
         self.loss = self.loss1 + self.loss2 * self.const
 
@@ -276,22 +273,23 @@ class hash_attack:
         else:
             self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
-            self.p = np.clip(self.p, self.down, self.up)
+            # self.p = np.clip(self.p, self.down, self.up)
 
             for i in range(self.batch_size):
                 for j in range(self.mc_sample // 2):
                     var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const
                     var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const
 
-            losses, loss1, loss2 = self.sess.run([self.loss, self.loss1, self.loss2], feed_dict={self.modifier: var})
+            losses, loss1, loss2, scaled_modifier, nimgs = self.sess.run([self.loss, self.loss1, self.loss2, self.scaled_modifier, self.newimg], feed_dict={self.modifier: var})
  
             lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape, self.up, self.down)      
             print(losses)     
+            # print(loss2)
 
 
 
 
-        return losses[0:self.multi_imgs_num].sum(), loss1[0:self.multi_imgs_num].sum(), loss2[0:self.multi_imgs_num].sum()
+        return losses[0:self.multi_imgs_num], loss1[0:self.multi_imgs_num], loss2[0:self.multi_imgs_num], nimgs[0:self.multi_imgs_num], scaled_modifier[0]
 
     def attack_batch(self, input_images, target_image):
         lower_bound = 0.0
@@ -301,8 +299,13 @@ class hash_attack:
         self.modifier_up = 0.5 - input_images[0].reshape(-1)
         self.modifier_down = -0.5 - input_images[0].reshape(-1)
 
-        self.up = 1 - np.max(input_images, axis=0)
-        self.down = 0 - np.min(input_images, axis=0)
+
+        # if self.use_resize == True:
+        #     self.up = 1 - 
+        #     self.down = 
+        # else:
+        #     self.up = 1 - np.max(input_images, axis=0)
+        #     self.down = 0 - np.min(input_images, axis=0)
         
         best_loss_x = []
         best_loss_y = []
@@ -332,25 +335,25 @@ class hash_attack:
                 loss, loss1, loss2 = self.sess.run((self.loss,self.loss1,self.loss2), feed_dict={self.modifier: self.real_modifier})
 
                 if iteration % (self.print_unit) == 0:
-                    print("[STATS] iter = {}, time = {:.3f}, modifier shape = {}, loss = {:.5g}, loss1 = {:.5g}, loss2 = {:.5g}".format(iteration, train_timer, self.real_modifier.shape, loss[0:self.multi_imgs_num].sum(), loss1[0:self.multi_imgs_num].sum(), loss2[0:self.multi_imgs_num].sum()))
+                    hours = int(train_timer // 3600)
+                    minutes = int(train_timer // 60)
+                    seconds = int(train_timer % 60)
+                    print("[STATS] iter = {}, time = {}:{}:{}, modifier shape = {}, loss = {:.5g}, loss1 = {:.5g}, loss2 = {:.5g}".format(iteration, hours, minutes, seconds, self.real_modifier.shape, loss[0:self.multi_imgs_num].sum(), loss1[0:self.multi_imgs_num].sum(), loss2[0:self.multi_imgs_num].sum()))
                     sys.stdout.flush()
                 
                 loss_x.append(iteration)
                 loss_y.append(loss)
-                
-                if loss1 <= self.threshold:
+
+                l, hashdiffer, loss2, modified_imgs, scaled_modifier = self.blackbox_optimizer()
+
+                if hashdiffer.max() <= self.threshold:
                     success = True
 
                     break
 
-                
-                    
-
-                l, loss1, loss2 = self.blackbox_optimizer()
-
                 end_time = time.time()
 
-                train_timer += end_time - start_time
+                train_timer = end_time - start_time
 
                 # l = self.blackbox_optimizer()
 
@@ -360,4 +363,4 @@ class hash_attack:
                     continue 
                     
 
-        return self.real_modifier[0], loss_x, loss_y
+        return success, self.modifier[0], loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier

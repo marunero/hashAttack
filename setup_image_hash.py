@@ -31,7 +31,8 @@ targetImages_path = "./targetImages/"
 libPath = './pyPhotoDNA/PhotoDNAx64.dll'
 
 def gen_image(arr):
-    fig = np.around((arr) * 255.0)
+    arr = np.clip(arr, -0.5, 0.5)
+    fig = np.around((arr + 0.5) * 255.0)
     fig = fig.astype(np.uint8).squeeze()
     img = Image.fromarray(fig)
 
@@ -133,8 +134,8 @@ def read_inputImage(ff):
 
   img = resize(img,(img.shape[0], img.shape[1], 3), anti_aliasing=True)
   gray_img = resize(gray_img,(gray_img.shape[0],gray_img.shape[1], 1), anti_aliasing=True)
-
-
+  img -= 0.5
+  gray_img -= 0.5
 
   return [img, gray_img]
 
@@ -156,6 +157,7 @@ class ImageNet:
         img = Image.open(f)
         img = np.array(img)
         img = resize(img, (img.shape[0], img.shape[1], 3), anti_aliasing = True)
+        img -= 0.5
 
         target_data.append(img)
 
@@ -167,14 +169,15 @@ class ImageNet_Hash:
     def __init__(self, targeted = True):
       self.targeted = targeted
     
-    def get_loss_phash(self, inputs, target):
-      return tf.py_function(loss_phash, [inputs, target, self.targeted], tf.float32)
-    def get_loss_pdq(self, inputs, target):
-      return tf.py_function(loss_PDQ, [inputs, target, self.targeted], tf.float32)
-    def get_loss_photoDNA(self, inputs, target):
-      return tf.py_function(loss_photoDNA, [inputs, target, self.targeted], tf.float32)
+    def get_loss(self, inputs, target, method):
+        if method == "phash":
+            return tf.py_function(loss_phash, [inputs, target, self.targeted], tf.float32)
+        elif method == "pdqhash":
+            return tf.py_function(loss_PDQ, [inputs, target, self.targeted], tf.float32)
+        elif method == "photoDNA":
+            return tf.py_function(loss_photoDNA, [inputs, target, self.targeted], tf.float32)
+        # else
+        else:
+            return tf.py_function(loss_photoDNA, [inputs, target, self.targeted], tf.float32)
 
-        
-      
-    
-    
+
