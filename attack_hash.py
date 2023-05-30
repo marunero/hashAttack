@@ -60,11 +60,11 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
 
                 if a > 0 and b > 0:
                     if a > b:
-                        g += (a) * perturbation[k] * perturbation_pixel
+                        g += (a) * perturbation[k]
                     else:
-                        g += (-b) * perturbation[k] * perturbation_pixel
+                        g += (-b) * perturbation[k]
                 else:
-                    g += (a - b) * perturbation[k] * perturbation_pixel
+                    g += (a - b) * perturbation[k]
                 
                 # g += (a - b) * perturbation[k] * perturbation_pixel
 
@@ -73,16 +73,16 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
 
     # add momentum
     grad = 0.4999 * grad + 0.5001 * g 
+
     # grad = g
 
     # normalization
-    if np.sum(grad ** 2) != 0:
-        grad = grad / np.sum(grad ** 2)
+    grad = grad / max(grad.max(), -(grad.min()))
 
     real_modifier += grad * lr * perturbation_pixel
     # real_modifier = np.clip(real_modifier, down, up)
 
-    return lr
+    return lr, grad
 
 class hash_attack:
     def __init__(self, sess, model, batch_size=1,
@@ -183,8 +183,7 @@ class hash_attack:
             self.l2dist = tf.reduce_sum(tf.square(l2), [1, 2, 3])
         self.loss2 = self.l2dist
 
-
-        self.loss = self.loss1 # + self.loss2 * self.const
+        self.loss = self.loss1 + self.loss2 * self.const
 
 
         # these are the variables to initialize when we run
@@ -230,7 +229,7 @@ class hash_attack:
         elif self.solver_metric == "momentum":
             self.solver = momentum
         self.momentum = 0.5
-        self.perturbation_pixel = 0.004
+        self.perturbation_pixel = 1.0 / 255
         self.perturbation_const = perturbation_const
         self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
@@ -282,7 +281,8 @@ class hash_attack:
 
             losses, loss1, loss2, scaled_modifier, nimgs = self.sess.run([self.loss, self.loss1, self.loss2, self.scaled_modifier, self.newimg], feed_dict={self.modifier: var})
  
-            lr = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape, self.up, self.down)      
+            lr, grad = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape, self.up, self.down)  
+            self.grad = grad
             print(losses)     
             # print(loss2)
 

@@ -51,7 +51,7 @@ def main(args):
     #Don't pre-allocate memory; allocate as-needed
     config.gpu_options.allow_growth = True
     #Only allow a total of half the GPU memory to be allocated
-    config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    # config.gpu_options.per_process_gpu_memory_fraction = 0.5
 
     with tf.Session(config=config) as sess:
         
@@ -107,7 +107,8 @@ def main(args):
             # save images result
             for j in range(modified_imgs.shape[0]):
                 differ = hashdiffer[j]
-                l2 = np.sqrt(np.sum(scaled_modifier ** 2))
+                l2 = np.sqrt(np.sum((scaled_modifier * 255) ** 2))
+                avg_l2 = l2 / (scaled_modifier.shape[0] * scaled_modifier.shape[1])
                 # result suffix
                 # current image ID, target image ID
                 # hash metric, hash difference, l2 distance
@@ -154,7 +155,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_resize", action='store_true', help="resize image")
     parser.add_argument("--resize_size", type=int, default=64, help="size of resized modifier")
     parser.add_argument("-p", "--print_unit", type=int, default=1, help="print objs every print_unit iterations")
-    parser.add_argument("-c", "--init_const", type=float, default=0.1)
+    parser.add_argument("-c", "--init_const", type=float, default=0.01)
     parser.add_argument("-bi", "--binary_steps", type=int, default=1)
 
     

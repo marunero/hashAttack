@@ -22,4 +22,4 @@ os.system('cd {}'.format(os.getcwd()))
 
 # --use_resize --resize_size 64
 
-os.system('python main.py -i 2 -n 10 -mu 1 --gpu 0 -mc 128 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale  --batch 1 -lr 0.5 -mi 20000 -pc 1 --save result')
+os.system('python main.py -i 0 -n 1 -mu 1 --gpu 0 -mc 16 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.5 -mi 20000 -pc 1 --save result --seed 20')
