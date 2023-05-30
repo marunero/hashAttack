@@ -184,7 +184,7 @@ class hash_attack:
         self.loss2 = self.l2dist
 
 
-        self.loss = self.loss1 + self.loss2 * self.const
+        self.loss = self.loss1 # + self.loss2 * self.const
 
 
         # these are the variables to initialize when we run

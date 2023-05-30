@@ -20,7 +20,6 @@ os.system('cd {}'.format(os.getcwd()))
 # lr 0.25 -> perturbation_cost 8~16
 # lr 0.5 -> perturbation_cost 16~32
 
+# --use_resize --resize_size 64
 
-
-
-os.system('python main.py -i 17 -n 2 -mu 2 --gpu 0 -mc 64 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 64 --batch 1 -lr 0.01 -mi 20 -pc 16 --save result')
+os.system('python main.py -i 2 -n 10 -mu 1 --gpu 0 -mc 128 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale  --batch 1 -lr 0.5 -mi 20000 -pc 1 --save result')

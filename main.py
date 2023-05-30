@@ -119,12 +119,18 @@ def main(args):
             modifier_suffix = "{}".format(data_time)
             np.save("{}/{}".format(args['save'], modifier_suffix), scaled_modifier)
 
-
             # plot and save loss graph
 
             # plt.plot(loss_x, loss_y) 
             # plt.savefig(data_time + '_' + str(i) + 'graph.png')
             # plt.clf()
+
+            if success:
+                success_count += 1
+        
+        # print summary of result
+        print("Total success rate = {} / {}".format(success_count, args['numimg']))
+
         
 
 
