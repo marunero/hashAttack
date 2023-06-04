@@ -9,6 +9,8 @@ import time
 from numba import jit
 from PIL import Image
 
+from tqdm import tqdm
+
 @jit(nopython=True)
 def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real_modifier, up, down, lr, adam_epoch, beta1, beta2, multi_imgs_num, mc_sample, delta):
     for i in range(batch_size):
@@ -45,6 +47,9 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
 @jit(nopython=True)
 def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape, up, down):
     g = np.zeros((resized_shape), dtype=np.float32)
+    a = 0
+    b = 0
+    c = 0
     # for i in range(batch_size):
     #     for j in range(multi_imgs_num):
     #         for k in range(mc_sample // 2):
@@ -61,15 +66,20 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
                 if a > 0 and b > 0:
                     if a > b:
                         g += (a) * perturbation[k]
+                        c += 1
                     else:
                         g += (-b) * perturbation[k]
+                        c += 1
                 else:
                     g += (a - b) * perturbation[k]
+                    c += 1
                 
                 # g += (a - b) * perturbation[k] * perturbation_pixel
 
 
-    g /= multi_imgs_num * mc_sample
+    if c != 0:
+        g /= c
+    # g /= multi_imgs_num * mc_sample
 
     # add momentum
     grad = 0.4999 * grad + 0.5001 * g 
@@ -310,6 +320,7 @@ class hash_attack:
         best_loss_x = []
         best_loss_y = []
         success = False
+        success_iter = self.max_iterations
 
         for binary_step in range(self.binary_search_steps):
             self.sess.run(self.setup, {self.assign_input_images: input_images, self.assign_target_image: target_image, self.assign_const: CONST})
@@ -331,7 +342,7 @@ class hash_attack:
 
             start_time = time.time()
 
-            for iteration in range(self.max_iterations):
+            for iteration in tqdm(range(self.max_iterations)):
                 loss, loss1, loss2 = self.sess.run((self.loss,self.loss1,self.loss2), feed_dict={self.modifier: self.real_modifier})
 
                 if iteration % (self.print_unit) == 0:
@@ -348,7 +359,7 @@ class hash_attack:
 
                 if hashdiffer.max() <= self.threshold:
                     success = True
-
+                    success_iter = iteration
                     break
 
                 end_time = time.time()
@@ -363,4 +374,4 @@ class hash_attack:
                     continue 
                     
 
-        return success, self.modifier[0], loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier
+        return success, success_iter, self.modifier[0], loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier

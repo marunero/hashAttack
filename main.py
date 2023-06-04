@@ -95,7 +95,7 @@ def main(args):
 
 
 
-            success, modifier, loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier  = attack.attack_batch(input_images, target_image)
+            success, success_iter, modifier, loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier  = attack.attack_batch(input_images, target_image)
 
 
             # current time (to record) 
@@ -112,7 +112,7 @@ def main(args):
                 # result suffix
                 # current image ID, target image ID
                 # hash metric, hash difference, l2 distance
-                modified_img_suffix = "{}_{}_inputID{}_targetID{}_{}differ_{}_l2distance_{}".format(data_time, success, i + j, i, args['hash'], differ, l2)
+                modified_img_suffix = "{}_{}_{}_inputID{}_targetID{}_{}differ_{}_l2distance_{}".format(data_time, success, success_iter, i + j, i, args['hash'], differ, l2)
 
                 gen_image(modified_imgs[j]).save("{}/{}.png".format(args['save'], modified_img_suffix))
             
