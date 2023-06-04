@@ -77,9 +77,9 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
     # grad = g
 
     # normalization
-    grad = grad / max(grad.max(), -(grad.min()))
+    # grad = grad / max(grad.max(), -(grad.min()))
 
-    real_modifier += grad * lr * perturbation_pixel
+    real_modifier += grad * lr
     # real_modifier = np.clip(real_modifier, down, up)
 
     return lr, grad
@@ -118,7 +118,7 @@ class hash_attack:
         elif self.hash_metric == "pdqhash":
             self.threshold = 90
         else: # phash, etc.
-            self.threshold = 0
+            self.threshold = 14
 
         self.use_resize = use_resize
         self.use_tanh = use_tanh

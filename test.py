@@ -80,7 +80,7 @@ def PhotoDNA_Distance(h1, h2):
 	return distance
 
 
-img1 = Image.open('InputImages/id00000.png')
+img1 = Image.open('InputImages/id00020.png')
 
 
 h1 = generatePhotoDNAHash(img1)
@@ -88,7 +88,7 @@ ImageNet_path = "C:/Users/sungwoo/Downloads/size_500_375"
 file_list = os.listdir(ImageNet_path)
 
 for i, file_name in enumerate(file_list):
-    if file_name == "id00019.png":
+    if file_name == "id00020.png":
         continue
     img2 = Image.open(os.path.join(ImageNet_path, file_name)).convert('RGB')
     
