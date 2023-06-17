@@ -16,6 +16,7 @@ import cv2
 
 import matplotlib.pyplot as plt
 
+plt.rc('xtick', labelsize=5)  # x축 눈금 폰트 크기 
 import pdqhash
 import imagehash
 # photoDNA
@@ -30,7 +31,7 @@ from ctypes import c_char_p
 
 libPath = r'C:\Users\sungwoo\Downloads\hashAttack\pyPhotoDNA\PhotoDNAx64.dll'
 
-mode = "PDQ"
+mode = "phash"
 
 def differ(h1, h2):
     return h1 - h2
@@ -76,13 +77,19 @@ def get_threshold():
     
     print(len(file_list))
     start_time = time.time()
+
+    # count = 100
+
     for i, file_name in enumerate(file_list):
-        
+        # if i > count:
+        #     break
+        # i += 1
         img = Image.open(os.path.join(ImageNet_path, file_name)).convert('RGB')
         
         # phash
         if mode == "phash":
-            h = imagehash.phash(img)
+            # h = imagehash.phash(img)
+            h = imagehash.phash(img, hash_size=16)
 
         # photoDNA
         elif mode == "photoDNA":
@@ -148,15 +155,22 @@ def get_threshold():
 
 
     if mode == "phash":
-        bins = [2 * i for i in range(33)]
+        bins = [i for i in range(256)]
 
 
         hist, bins = np.histogram(list_differ, bins=bins)
-        plt.bar(bins[:-1], hist, width=1)
-        plt.xticks(bins)
+
+        nonzero_bins = hist.nonzero()
+        new_bin_edges = bins[nonzero_bins]
+        new_hist = hist[nonzero_bins]
+
+        plt.bar(bins[:-1], hist)
+        plt.xticks(new_bin_edges)
+        plt.xlim(new_bin_edges[0], new_bin_edges[-1])
         plt.xlabel('distance')
         plt.ylabel('Frequency')
-        plt.show()
+        # plt.show()
+        plt.savefig('phash_256.png', dpi=300)
     elif mode == "photoDNA":
         print(min_d, max_d)
 
@@ -194,13 +208,7 @@ def gen_image(arr):
     return img
 
 if __name__ == "__main__":
-    img = Image.open("C:/Users/sungwoo/Downloads/imgdata/ILSVRC2012_val_00000004.JPEG")
-    img = np.array(img)
-    img = resize(img,(img.shape[0], img.shape[1], 3), anti_aliasing=True)
-
-    noise = np.load('test_modifier.npy') 
-
-    gen_image(noise + img).show()
+    get_threshold()
 
 
     

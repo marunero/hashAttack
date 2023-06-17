@@ -22,8 +22,27 @@ os.system('cd {}'.format(os.getcwd()))
 
 # --use_resize --resize_size 64
 
-os.system('python main.py -i 19 -n 2 -mu 1 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.01 -mi 20000 -pc 1 --save result --seed 1300')
+# 6/5/20/00
+# os.system('python main.py -i 20 -n 1 -mu 1 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.05 -mi 20000 -pc 100 --save result --seed 1840')
 
-os.system('python main.py -i 19 -n 2 -mu 1 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.03 -mi 20000 -pc 1 --save result --seed 1400')
+# 6/5/18/31
+# os.system('python main.py -i 15 -n 5 -mu 1 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.05 --use_resize --resize_size 64 -mi 20000 -pc 16 --save result/photoDNA --seed 12345')
 
-os.system('python main.py -i 19 -n 2 -mu 1 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 1 --save result --seed 1500')
+
+
+# # photoDNA, use_resize, pc = 8 ~ 16, lr = 0.01
+# os.system('python main.py -i 18 -n 1 -mu 1 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 --use_resize --resize_size 64 -lr 0.01 -mi 20000 -pc 16 --save result --seed 2547')
+
+# # PDQ, use_resize, pc = 100, lr = 0.1
+# os.system('python main.py -i 18 -n 1 -mu 1 --gpu 0 -mc 64 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.5 -mi 20000 -pc 16 --save result --seed 2548')
+
+# # pdq_photoDNA, use_resize, pc = ?, lr = ?
+# os.system('python main.py -i 18 -n 1 -mu 1 --gpu 0 -mc 64 --targeted -hash pdq_photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 --use_resize --resize_size 64 -lr 0.01 -mi 20000 -pc 16 --save result --seed 2549')
+
+
+
+# os.system('python main.py -i 19 -n 1 -mu 1 --gpu 0 -mc 32 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 64 --batch 1 -lr 0.001 -mi 40000 -pc 16 --save result --seed 2546 --checkpoint result/06_12_20_47.npy')
+
+# os.system('python main.py -i 10 -n 1 -mu 7 --gpu 0 -mc 32 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
+
+os.system('python main.py -i 18 -n 1 -mu 3 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.02 -mi 20000 -pc 32 --save result --seed 25146')

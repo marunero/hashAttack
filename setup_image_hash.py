@@ -69,20 +69,6 @@ def PhotoDNA_Distance(h1, h2):
 		distance += abs(h1[i] - h2[i])
 	return distance
 
-def loss_photoDNA(inputs, target, targeted):
-    a = []
-
-    h1 = generatePhotoDNAHash(gen_image(target))
-
-    for i in range(inputs.shape[0]):
-        h2 = generatePhotoDNAHash(gen_image(inputs[i]))
-
-        a.append(PhotoDNA_Distance(h1, h2))
-
-    a = np.asarray(a)
-    a = a.astype('float32')
-    return a
-    
 def loss_phash(inputs, target, targeted):
     a = []
     h1 = imagehash.phash(gen_image(target))
@@ -97,6 +83,21 @@ def loss_phash(inputs, target, targeted):
     a = np.asarray(a)
     a = a.astype('float32')
     return a
+
+def loss_photoDNA(inputs, target, targeted):
+    a = []
+
+    h1 = generatePhotoDNAHash(gen_image(target))
+
+    for i in range(inputs.shape[0]):
+        h2 = generatePhotoDNAHash(gen_image(inputs[i]))
+
+        a.append(PhotoDNA_Distance(h1, h2))
+
+    a = np.asarray(a)
+    a = a.astype('float32')
+    return a
+    
 
 
 def loss_PDQ(inputs, target, targeted):
@@ -119,6 +120,35 @@ def loss_PDQ(inputs, target, targeted):
         a.append(differ)
         
     
+    a = np.asarray(a)
+    a = a.astype('float32')
+    return a
+
+def loss_PDQ_photoDNA(inputs, target, targeted):
+    a = []
+
+    h1_photoDNA = generatePhotoDNAHash(gen_image(target))
+
+    img1 = gen_image(target)    
+    np_img1 = np.array(img1)
+    cv2_img1 = cv2.cvtColor(np_img1, cv2.COLOR_RGB2BGR)
+    h1_PDQ, q1 = pdqhash.compute(cv2_img1)
+
+    for i in range(inputs.shape[0]):
+        h2_photoDNA = generatePhotoDNAHash(gen_image(inputs[i]))
+
+        img2 = gen_image(inputs[i])
+        np_img2 = np.array(img2)
+        cv2_img2 = cv2.cvtColor(np_img2, cv2.COLOR_RGB2BGR)
+        h2_PDQ, q2 = pdqhash.compute(cv2_img2)
+
+        differ_PDQ = ((h1_PDQ != h2_PDQ) * 1).sum()
+        differ_photoDNA = PhotoDNA_Distance(h1_photoDNA, h2_photoDNA)
+        
+        # a.append(max(0, np.tanh(differ / 256))) 
+        a.append(max(differ_PDQ, 90) * 20 + max(differ_photoDNA, 1800))
+        
+
     a = np.asarray(a)
     a = a.astype('float32')
     return a
@@ -176,6 +206,8 @@ class ImageNet_Hash:
             return tf.py_function(loss_PDQ, [inputs, target, self.targeted], tf.float32)
         elif method == "photoDNA":
             return tf.py_function(loss_photoDNA, [inputs, target, self.targeted], tf.float32)
+        elif method == "pdq_photoDNA":
+            return tf.py_function(loss_PDQ_photoDNA, [inputs, target, self.targeted], tf.float32)
         # else
         else:
             return tf.py_function(loss_photoDNA, [inputs, target, self.targeted], tf.float32)

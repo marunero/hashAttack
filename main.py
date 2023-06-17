@@ -51,7 +51,7 @@ def main(args):
     #Don't pre-allocate memory; allocate as-needed
     config.gpu_options.allow_growth = True
     #Only allow a total of half the GPU memory to be allocated
-    # config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    config.gpu_options.per_process_gpu_memory_fraction = 0.5
 
     with tf.Session(config=config) as sess:
         
@@ -91,7 +91,7 @@ def main(args):
             print('input images shape ', input_images.shape)
             print('target image shape ', target_image.shape)
 
-            attack = hash_attack(sess, model, args['batch_size'], args['targeted'], args['learning_rate'], args['binary_steps'], args['max_iteration'], args['print_unit'], args['init_const'], args['use_tanh'], args['use_resize'], args['resize_size'], args['use_grayscale'], args['adam_beta1'], args['adam_beta2'], args['mc_sample'], args['multi'], args['perturbation_const'], args['optimizer'], args['hash'], args['distance_metric'], input_images.shape[1], input_images.shape[2], input_images.shape[3], target_image.shape[0], target_image.shape[1], target_image.shape[2])
+            attack = hash_attack(sess, model, args['batch_size'], args['targeted'], args['learning_rate'], args['binary_steps'], args['max_iteration'], args['print_unit'], args['init_const'], args['checkpoint'], args['use_tanh'], args['use_resize'], args['resize_size'], args['use_grayscale'], args['adam_beta1'], args['adam_beta2'], args['mc_sample'], args['multi'], args['perturbation_const'], args['optimizer'], args['hash'], args['distance_metric'], input_images.shape[1], input_images.shape[2], input_images.shape[3], target_image.shape[0], target_image.shape[1], target_image.shape[2])
 
 
 
@@ -112,19 +112,21 @@ def main(args):
                 # result suffix
                 # current image ID, target image ID
                 # hash metric, hash difference, l2 distance
-                modified_img_suffix = "{}_{}_{}_inputID{}_targetID{}_{}differ_{}_l2distance_{}".format(data_time, success, success_iter, i + j, i, args['hash'], differ, l2)
+                modified_img_suffix = "{}_{}_{}_inputID{}_targetID{}_lr{}_pc{}_{}differ{}_l2distance_{}".format(data_time, success, success_iter, i + j, i, args['learning_rate'], args['perturbation_const'], args['hash'], differ, l2)
 
                 gen_image(modified_imgs[j]).save("{}/{}.png".format(args['save'], modified_img_suffix))
             
             # save modifier
-            modifier_suffix = "{}".format(data_time)
-            np.save("{}/{}".format(args['save'], modifier_suffix), scaled_modifier)
+            modifier_suffix = "{}_modifier".format(data_time)
+            np.save("{}/{}".format(args['save'], modifier_suffix), modifier)
+            scaled_modifier_suffix = "{}_scaled_modifier".format(data_time)
+            np.save("{}/{}".format(args['save'], scaled_modifier_suffix), scaled_modifier)
 
             # plot and save loss graph
 
-            # plt.plot(loss_x, loss_y) 
-            # plt.savefig(data_time + '_' + str(i) + 'graph.png')
-            # plt.clf()
+            plt.plot(loss_x, loss_y) 
+            plt.savefig(data_time + '_' + str(i) + 'graph.png')
+            plt.clf()
 
             if success:
                 success_count += 1
@@ -146,7 +148,7 @@ if __name__ == "__main__":
     parser.add_argument("-mu", "--multi", type=int, default=1, help="number of images to attack simultaneously")
     parser.add_argument("-mc", "--mc_sample", type=int, default=2, help="number of samples for Monte Carlo")
     parser.add_argument("-t", "--targeted", action='store_true')
-    parser.add_argument("-hash", "--hash", choices=["phash", "pdqhash", "photoDNA"], default="phash")
+    parser.add_argument("-hash", "--hash", choices=["phash", "pdqhash", "photoDNA", "pdq_photoDNA"], default="phash")
     parser.add_argument("-dist", "--distance_metric", choices=["l2dist", "pdist"], default="l2dist")
     parser.add_argument("--optimizer", choices=["adam", "momentum"], default="adam")
 
@@ -168,7 +170,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--gpu", "--gpu_machine", default="0")
     parser.add_argument("-s", "--save", help="result image and modifier save directory", default="result")
-
+    parser.add_argument("-check", "--checkpoint", help="load checkpoint of modifier", default="")
     parser.add_argument("--seed", type=int, default=1239)
     args = vars(parser.parse_args())
 

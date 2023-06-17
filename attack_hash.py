@@ -77,9 +77,10 @@ def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_im
                 # g += (a - b) * perturbation[k] * perturbation_pixel
 
 
-    if c != 0:
-        g /= c
-    # g /= multi_imgs_num * mc_sample
+    # if c != 0:
+    #     g /= c
+
+    g /= multi_imgs_num * mc_sample
 
     # add momentum
     grad = 0.4999 * grad + 0.5001 * g 
@@ -98,7 +99,7 @@ class hash_attack:
     def __init__(self, sess, model, batch_size=1,
                  targeted=True, learning_rate=0.1,
                  binary_search_steps=1, max_iterations=4000, print_unit=1,
-                 initial_loss_const=1, use_tanh=True, use_resize=False, resize_size=32, use_grayscale=False, 
+                 initial_loss_const=1, checkpoint="", use_tanh=True, use_resize=False, resize_size=32, use_grayscale=False, 
                  adam_beta1=0.99, adam_beta2=0.9999, mc_sample = 2, multi_imgs_num=1, perturbation_const=10,
                  solver="adam", hash_metric="phash",
                  dist_metric="l2dist", input_x=288, input_y=288, input_c=1, target_x=288, target_y=288, target_c=3):
@@ -127,6 +128,8 @@ class hash_attack:
             self.threshold = 1800
         elif self.hash_metric == "pdqhash":
             self.threshold = 90
+        elif self.hash_metric == "pdq_photoDNA":
+            self.threshold = 1800 + 90 * 20
         else: # phash, etc.
             self.threshold = 14
 
@@ -156,8 +159,9 @@ class hash_attack:
         
         # self.scaled_modifier = tf.tanh(self.scaled_modifier)
 
+        self.checkpoint = checkpoint
         self.real_modifier = np.zeros((1, ) + self.resized_shape, dtype=np.float32)
-
+        
         self.input_images = tf.Variable(np.zeros((self.multi_imgs_num, ) + input_shape), dtype=tf.float32) 
         self.target_image = tf.Variable(np.zeros(target_shape), dtype=tf.float32)
         self.const = tf.Variable(0.0, dtype=tf.float32)
@@ -289,17 +293,15 @@ class hash_attack:
                     var[i * self.mc_sample + j + 1] += self.p[j] * self.perturbation_const
                     var[i * self.mc_sample + self.mc_sample - j] -= self.p[j] * self.perturbation_const
 
-            losses, loss1, loss2, scaled_modifier, nimgs = self.sess.run([self.loss, self.loss1, self.loss2, self.scaled_modifier, self.newimg], feed_dict={self.modifier: var})
+            losses, loss1, loss2, modifier, scaled_modifier, nimgs = self.sess.run([self.loss, self.loss1, self.loss2, self.modifier, self.scaled_modifier, self.newimg], feed_dict={self.modifier: var})
  
-            lr, grad = self.solver(losses, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape, self.up, self.down)  
+            lr, grad = self.solver(loss1, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape, self.up, self.down)  
             self.grad = grad
-            print(losses)     
+            print(loss1)     
             # print(loss2)
 
 
-
-
-        return losses[0:self.multi_imgs_num], loss1[0:self.multi_imgs_num], loss2[0:self.multi_imgs_num], nimgs[0:self.multi_imgs_num], scaled_modifier[0]
+        return losses[0:self.multi_imgs_num], loss1[0:self.multi_imgs_num], loss2[0:self.multi_imgs_num], nimgs[0:self.multi_imgs_num], modifier[0], scaled_modifier[0]
 
     def attack_batch(self, input_images, target_image):
         lower_bound = 0.0
@@ -327,8 +329,10 @@ class hash_attack:
 
             train_timer = 0.0
 
-
-            self.real_modifier.fill(0.0)
+            if self.checkpoint:
+                self.real_modifier = np.load(self.checkpoint)
+            else:
+                self.real_modifier.fill(0.0)
 
             # reset ADAM status
             self.mt.fill(0.0)
@@ -347,15 +351,17 @@ class hash_attack:
 
                 if iteration % (self.print_unit) == 0:
                     hours = int(train_timer // 3600)
-                    minutes = int(train_timer // 60)
+                    minutes = int((train_timer % 3600) // 60)
                     seconds = int(train_timer % 60)
                     print("[STATS] iter = {}, time = {}:{}:{}, modifier shape = {}, loss = {:.5g}, loss1 = {:.5g}, loss2 = {:.5g}".format(iteration, hours, minutes, seconds, self.real_modifier.shape, loss[0:self.multi_imgs_num].sum(), loss1[0:self.multi_imgs_num].sum(), loss2[0:self.multi_imgs_num].sum()))
                     sys.stdout.flush()
                 
-                loss_x.append(iteration)
-                loss_y.append(loss)
 
-                l, hashdiffer, loss2, modified_imgs, scaled_modifier = self.blackbox_optimizer()
+                l, hashdiffer, loss2, modified_imgs, modifier, scaled_modifier = self.blackbox_optimizer()
+                # hashdiffer == loss1
+                
+                loss_x.append(iteration)
+                loss_y.append(hashdiffer)
 
                 if hashdiffer.max() <= self.threshold:
                     success = True
@@ -374,4 +380,4 @@ class hash_attack:
                     continue 
                     
 
-        return success, success_iter, self.modifier[0], loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier
+        return success, success_iter, modifier, loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier
