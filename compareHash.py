@@ -34,6 +34,7 @@ from skimage.transform import rescale, resize, downscale_local_mean
 libPath = './pyPhotoDNA/PhotoDNAx64.dll'
 
 import pdqhash
+import imagehash
 
 # photoDNA
 import glob
@@ -77,45 +78,60 @@ def PhotoDNA_Distance(h1, h2):
 		distance += abs(h1[i] - h2[i])
 	return distance
 
-# while True:
-#     ImageID = int(input("Image id = "))
-#     targetImageID = int(input("Target Image id = "))
+modifier = np.load("result/06_21_19_16_scaled_modifier.npy")
+
+while True:
+    ImageID = int(input("Image id = "))
+    targetImageID = int(input("Target Image id = "))
 
 
-#     img1 = Image.open('InputImages/id{:05d}.png'.format(ImageID)).convert("L")
-#     img2 = Image.open('targetImages/id{:03d}.png'.format(targetImageID)).convert("L")
+    img1 = Image.open('InputImages/id{:05d}.png'.format(ImageID)).convert("RGB")
+    img2 = Image.open('targetImages/id{:03d}.png'.format(targetImageID)).convert("RGB")
+
+    img3 = np.array(img1)
+    img3 = img3 + modifier * 255
+    img3 = np.clip(img3, 0, 255).astype(np.uint8) 
+    img3 = Image.fromarray(img3)
+
+    h1 = generatePhotoDNAHash(img1)
+    h2 = generatePhotoDNAHash(img2)
+
+    new_h1 = generatePhotoDNAHash(img3)
+    print('photoDNA difference = ', PhotoDNA_Distance(h1, h2))
+    print('photoDNA difference with modifier = ', PhotoDNA_Distance(new_h1, h2))
+
+    # np_img1 = np.array(img1)
+    # cv2_img1 = cv2.cvtColor(np_img1, cv2.COLOR_RGB2BGR)
+    # h1, q1 = pdqhash.compute(cv2_img1)
+
+    # np_img2 = np.array(img2)
+    # cv2_img2 = cv2.cvtColor(np_img2, cv2.COLOR_RGB2BGR)
+    # h2, q2 = pdqhash.compute(cv2_img2)
+
+    # differ = ((h1 != h2) * 1).sum()
+
+    # print('PDQ differ = ', differ)
 
 
-#     h1 = generatePhotoDNAHash(img1)
-#     h2 = generatePhotoDNAHash(img2)
+    h1 = imagehash.phash(img2, hash_size=16)
+    h2 = imagehash.phash(img3, hash_size=16)
 
-#     print('photoDNA difference = ', PhotoDNA_Distance(h1, h2))
-
-#     np_img1 = np.array(img1)
-#     cv2_img1 = cv2.cvtColor(np_img1, cv2.COLOR_RGB2BGR)
-#     h1, q1 = pdqhash.compute(cv2_img1)
-
-#     np_img2 = np.array(img2)
-#     cv2_img2 = cv2.cvtColor(np_img2, cv2.COLOR_RGB2BGR)
-#     h2, q2 = pdqhash.compute(cv2_img2)
-
-#     differ = ((h1 != h2) * 1).sum()
-
-#     print('PDQ differ = ', differ)
-
-import imagehash
-
-img1 = Image.open("InputImages/id00000.png")
-img2 = Image.open("InputImages/id00001.png")
-
-h1 = imagehash.phash(img1)
-h2 = imagehash.phash(img2)
-print(h1 - h2)
+    print('phash differ = ', h1 - h2)
 
 
-h3 = imagehash.phash(img1, hash_size=16)
-h4 = imagehash.phash(img2, hash_size=16)
-print(h3 - h4)
+# import imagehash
+
+# img1 = Image.open("InputImages/id00000.png")
+# img2 = Image.open("InputImages/id00001.png")
+
+# h1 = imagehash.phash(img1)
+# h2 = imagehash.phash(img2)
+# print(h1 - h2)
+
+
+# h3 = imagehash.phash(img1, hash_size=16)
+# h4 = imagehash.phash(img2, hash_size=16)
+# print(h3 - h4)
 
 
 

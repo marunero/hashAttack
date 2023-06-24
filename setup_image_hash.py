@@ -69,7 +69,7 @@ def PhotoDNA_Distance(h1, h2):
 		distance += abs(h1[i] - h2[i])
 	return distance
 
-def loss_phash(inputs, target, targeted):
+def loss_phash64(inputs, target, targeted):
     a = []
     h1 = imagehash.phash(gen_image(target))
 
@@ -77,6 +77,21 @@ def loss_phash(inputs, target, targeted):
     for i in range(inputs.shape[0]):
         # black-box
         h2 = imagehash.phash(gen_image(inputs[i]))
+
+        a.append(h1 - h2)
+        
+    a = np.asarray(a)
+    a = a.astype('float32')
+    return a
+
+def loss_phash256(inputs, target, targeted):
+    a = []
+    h1 = imagehash.phash(gen_image(target), hash_size=16)
+
+
+    for i in range(inputs.shape[0]):
+        # black-box
+        h2 = imagehash.phash(gen_image(inputs[i]), hash_size=16)
 
         a.append(h1 - h2)
         
@@ -200,8 +215,10 @@ class ImageNet_Hash:
       self.targeted = targeted
     
     def get_loss(self, inputs, target, method):
-        if method == "phash":
-            return tf.py_function(loss_phash, [inputs, target, self.targeted], tf.float32)
+        if method == "phash64":
+            return tf.py_function(loss_phash64, [inputs, target, self.targeted], tf.float32)
+        elif method == "phash256":
+            return tf.py_function(loss_phash256, [inputs, target, self.targeted], tf.float32)
         elif method == "pdqhash":
             return tf.py_function(loss_PDQ, [inputs, target, self.targeted], tf.float32)
         elif method == "photoDNA":

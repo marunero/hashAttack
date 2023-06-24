@@ -45,4 +45,17 @@ os.system('cd {}'.format(os.getcwd()))
 
 # os.system('python main.py -i 10 -n 1 -mu 7 --gpu 0 -mc 32 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
 
-os.system('python main.py -i 18 -n 1 -mu 3 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.02 -mi 20000 -pc 32 --save result --seed 25146')
+# os.system('python main.py -i 18 -n 1 -mu 3 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.02 -mi 20000 -pc 32 --save result --seed 25146')
+
+
+
+
+# os.system('python main.py -i 0 -n 1 -mu 4 -ti 0 --gpu 0 -mc 32 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
+
+os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 128 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
+
+os.system('python main.py -i 0 -n 1 -mu 2 -ti 0 --gpu 0 -mc 64 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
+
+os.system('python main.py -i 0 -n 1 -mu 8 -ti 0 --gpu 0 -mc 16 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
+
+os.system('python main.py -i 0 -n 1 -mu 16 -ti 0 --gpu 0 -mc 8 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')

@@ -101,7 +101,7 @@ class hash_attack:
                  binary_search_steps=1, max_iterations=4000, print_unit=1,
                  initial_loss_const=1, checkpoint="", use_tanh=True, use_resize=False, resize_size=32, use_grayscale=False, 
                  adam_beta1=0.99, adam_beta2=0.9999, mc_sample = 2, multi_imgs_num=1, perturbation_const=10,
-                 solver="adam", hash_metric="phash",
+                 solver="adam", hash_metric="phash64",
                  dist_metric="l2dist", input_x=288, input_y=288, input_c=1, target_x=288, target_y=288, target_c=3):
         self.sess = sess
         self.model = model
@@ -130,8 +130,10 @@ class hash_attack:
             self.threshold = 90
         elif self.hash_metric == "pdq_photoDNA":
             self.threshold = 1800 + 90 * 20
-        else: # phash, etc.
+        elif self.hash_metric == "phash64":
             self.threshold = 14
+        else: # phash256
+            self.threshold = 90
 
         self.use_resize = use_resize
         self.use_tanh = use_tanh
@@ -160,7 +162,10 @@ class hash_attack:
         # self.scaled_modifier = tf.tanh(self.scaled_modifier)
 
         self.checkpoint = checkpoint
-        self.real_modifier = np.zeros((1, ) + self.resized_shape, dtype=np.float32)
+        if self.checkpoint:
+            self.real_modifier = np.load(checkpoint).reshape((1, ) + self.resized_shape)
+        else:
+            self.real_modifier = np.zeros((1, ) + self.resized_shape, dtype=np.float32)
         
         self.input_images = tf.Variable(np.zeros((self.multi_imgs_num, ) + input_shape), dtype=tf.float32) 
         self.target_image = tf.Variable(np.zeros(target_shape), dtype=tf.float32)
@@ -198,6 +203,9 @@ class hash_attack:
         self.loss2 = self.l2dist
 
         self.loss = self.loss1 + self.loss2 * self.const
+
+        # elif self.dist_metrics == "pdist"
+        # else:
 
 
         # these are the variables to initialize when we run
@@ -329,9 +337,13 @@ class hash_attack:
 
             train_timer = 0.0
 
-            if self.checkpoint:
-                self.real_modifier = np.load(self.checkpoint)
-            else:
+            ## binary_search_steps != 1
+            # if self.checkpoint:
+            #     self.real_modifier = np.load(self.checkpoint).reshape((1, ) + self.resized_shape)
+            # else:
+            #     self.real_modifier.fill(0.0)
+
+            if not self.checkpoint:
                 self.real_modifier.fill(0.0)
 
             # reset ADAM status
@@ -380,4 +392,4 @@ class hash_attack:
                     continue 
                     
 
-        return success, success_iter, modifier, loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier
+        return success, success_iter, modifier, loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier, train_timer

@@ -75,7 +75,7 @@ def main(args):
             else:
                 input_images = data.input_images_rgb[i:i + multi]
             
-            target_image = data.target_images_rgb[i]
+            target_image = data.target_images_rgb[args['target_id']]
             
 
             # print initial hash differnece
@@ -95,12 +95,17 @@ def main(args):
 
 
 
-            success, success_iter, modifier, loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier  = attack.attack_batch(input_images, target_image)
+            success, success_iter, modifier, loss_x, loss_y, hashdiffer, modified_imgs, scaled_modifier, time  = attack.attack_batch(input_images, target_image)
 
 
             # current time (to record) 
             now = datetime.now()
             data_time = now.strftime("%m_%d_%H_%M")
+
+            hours = int(time // 3600)
+            minutes = int((time % 3600) // 60)
+            seconds = int(time % 60)
+            # print("time = {}:{}:{}".format(hours, minutes, seconds))
 
             
             
@@ -112,7 +117,7 @@ def main(args):
                 # result suffix
                 # current image ID, target image ID
                 # hash metric, hash difference, l2 distance
-                modified_img_suffix = "{}_{}_{}_inputID{}_targetID{}_lr{}_pc{}_{}differ{}_l2distance_{}".format(data_time, success, success_iter, i + j, i, args['learning_rate'], args['perturbation_const'], args['hash'], differ, l2)
+                modified_img_suffix = "{}_{}_{}_mu{}_inputID{}_targetID{}_lr{}_pc{}_{}differ{}_l2distance_{}_time{}_{}_{}".format(data_time, success, success_iter, args['multi'], i + j, args['target_id'], args['learning_rate'], args['perturbation_const'], args['hash'], differ, l2, hours, minutes, seconds)
 
                 gen_image(modified_imgs[j]).save("{}/{}.png".format(args['save'], modified_img_suffix))
             
@@ -125,6 +130,8 @@ def main(args):
             # plot and save loss graph
 
             plt.plot(loss_x, loss_y) 
+            # suffix = data_time + '_' + str(i) + 'graph.png'
+            # plt.savefig("{}/{}".format(args['save'], suffix))
             plt.savefig(data_time + '_' + str(i) + 'graph.png')
             plt.clf()
 
@@ -144,11 +151,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--start_idx", type=int, default=0, help="start index of image folder")
+    parser.add_argument("-ti", "--target_id", type=int, default=0, help="target image id of image folder")
     parser.add_argument("-n", "--numimg", type=int, default=0, help="number of test images to attack")
     parser.add_argument("-mu", "--multi", type=int, default=1, help="number of images to attack simultaneously")
     parser.add_argument("-mc", "--mc_sample", type=int, default=2, help="number of samples for Monte Carlo")
     parser.add_argument("-t", "--targeted", action='store_true')
-    parser.add_argument("-hash", "--hash", choices=["phash", "pdqhash", "photoDNA", "pdq_photoDNA"], default="phash")
+    parser.add_argument("-hash", "--hash", choices=["phash64", "phash256", "pdqhash", "photoDNA", "pdq_photoDNA"], default="phash64")
     parser.add_argument("-dist", "--distance_metric", choices=["l2dist", "pdist"], default="l2dist")
     parser.add_argument("--optimizer", choices=["adam", "momentum"], default="adam")
 

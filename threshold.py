@@ -29,9 +29,12 @@ from ctypes import c_ubyte
 from ctypes import POINTER
 from ctypes import c_char_p
 
+from tqdm import tqdm
+
+
 libPath = r'C:\Users\sungwoo\Downloads\hashAttack\pyPhotoDNA\PhotoDNAx64.dll'
 
-mode = "phash"
+mode = "PDQ"
 
 def differ(h1, h2):
     return h1 - h2
@@ -68,9 +71,14 @@ def PhotoDNA_Distance(h1, h2):
 		distance += abs(h1[i] - h2[i])
 	return distance
 
+def h2str(hash):
+    result = ""
+    for i in range(len(hash)):
+        result += str(hash[i])
+    return result
 
 def get_threshold():
-    ImageNet_path = "C:/Users/sungwoo/Downloads/imgdata"
+    ImageNet_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category1_test"
     file_list = os.listdir(ImageNet_path)
     
     hashes = []
@@ -80,7 +88,7 @@ def get_threshold():
 
     # count = 100
 
-    for i, file_name in enumerate(file_list):
+    for i, file_name in tqdm(enumerate(file_list)):
         # if i > count:
         #     break
         # i += 1
@@ -95,13 +103,14 @@ def get_threshold():
         elif mode == "photoDNA":
             h = generatePhotoDNAHash(img)
 
-        elif mode == "PDQ":
+        else:
+        # elif mode == "PDQ":
             np_img = np.array(img)
             cv2_img = cv2.cvtColor(np_img, cv2.COLOR_RGB2BGR)
             h, q = pdqhash.compute(cv2_img)
 
-        
         hashes.append(h)
+
 
     list_differ = []
 
@@ -111,7 +120,9 @@ def get_threshold():
     min_d = -1
     max_d = -1
 
-    for i in range(len(hashes)):
+    print("hash list done")
+
+    for i in tqdm(range(len(hashes))):
         for j in range(i + 1, len(hashes)):
             if mode == "phash":
                 list_differ.append(differ(hashes[i], hashes[j]))
@@ -147,7 +158,9 @@ def get_threshold():
 
     end_time = time.time()
 
-    # print(set_differ)
+    # print(set_differ.keys().min())
+    sorted_keys = sorted(set_differ.keys())
+    print(sorted_keys)
 
     elapsed_time = end_time - start_time 
     print("총 실행 시간:", elapsed_time, "초")
