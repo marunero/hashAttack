@@ -209,15 +209,15 @@ def PhotoDNA_Distance(h1, h2):
       
 #   return img
 
-# def pdq(img):
-#   np_img1 = np.array(img)
-#   cv2_img1 = cv2.cvtColor(np_img1, cv2.COLOR_RGB2BGR)
-#   h1, q1 = pdqhash.compute(cv2_img1)
+def pdq(img):
+  np_img1 = np.array(img)
+  cv2_img1 = cv2.cvtColor(np_img1, cv2.COLOR_RGB2BGR)
+  h1, q1 = pdqhash.compute(cv2_img1)
 
-#   return h1
+  return h1
 
-# def pdq_differ(h1, h2):
-#   return ((h1 != h2) * 1).sum()
+def pdq_differ(h1, h2):
+  return ((h1 != h2) * 1).sum()
 
 # modifier = np.load("result/06_21_17_38_scaled_modifier.npy")
 # target = Image.open("targetImages/id013.png")
@@ -479,19 +479,68 @@ def PhotoDNA_Distance(h1, h2):
 # # print("PDQ difference = ", differ)
 
 
-folder_path = 'experiment_img/category1_train'
-save_path = 'experiment_img/category1_train_resize'
+# folder_path = 'experiment_img/category1_train'
+# save_path = 'experiment_img/category1_train_resize'
 
-# 대상 폴더 안에 있는 모든 파일 가져오기
-files = os.listdir(folder_path)
+# # 대상 폴더 안에 있는 모든 파일 가져오기
+# files = os.listdir(folder_path)
 
-w = 500
-h = 500
+# w = 500
+# h = 500
 
-for i, file_name in enumerate(files):
-  img = Image.open(os.path.join(folder_path, file_name))
-  img = np.array(img)
+# for i, file_name in enumerate(files):
+#   img = Image.open(os.path.join(folder_path, file_name))
+#   img = np.array(img)
 
-  scaled_img = zoom(img, (w / img.shape[0], h / img.shape[1], 1))
-  scaled_img = Image.fromarray(scaled_img)
-  scaled_img.save(os.path.join(save_path, file_name))
+#   scaled_img = zoom(img, (w / img.shape[0], h / img.shape[1], 1))
+#   scaled_img = Image.fromarray(scaled_img)
+#   scaled_img.save(os.path.join(save_path, file_name))
+
+test_image_path = r"C:\Users\sungwoo\Downloads\hashAttack\InputImages"
+target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target1.png"
+
+target = Image.open(target_image_path)
+h2 = pdq(target)
+
+images = os.listdir(test_image_path)
+
+hashes = []
+index = []
+
+for i, file_name in enumerate(images):
+  h = pdq(Image.open(os.path.join(test_image_path, file_name)))
+  index.append(i)
+  hashes.append(h)
+
+compH = h2
+
+result_index = []
+
+for i in range(len(hashes)):
+  
+  max_d = 0
+  max_h = 0
+  max_i = 0
+
+  for j in range(len(hashes)):
+    dif = pdq_differ(compH, hashes[j])
+    if dif > max_d:
+      max_d = dif
+      max_h = hashes[j]
+      max_i = j
+  
+  result_index.append(index[max_i])
+  compH = max_h
+  print(max_d)
+
+  hashes.pop(max_i)
+  index.pop(max_i)
+  
+print(result_index)
+
+for i in range(len(result_index)):
+  img_id = f"id{result_index[i]:04d}.png"
+  rename_id = f"id{(1000 + i):04d}.png"
+
+  image = Image.open(os.path.join(test_image_path, img_id))
+  image.save(os.path.join(test_image_path, rename_id))

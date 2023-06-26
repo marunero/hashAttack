@@ -73,8 +73,8 @@ def pdq_differ(h1, h2):
   return ((h1 != h2) * 1).sum()
 
 
-test_image_path = "C:/Users/sungwoo/Downloads/imgdata"
-modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/PDQ/06_23_23_28_scaled_modifier.npy"
+test_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category1_test"
+modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/06_26_09_59_scaled_modifier.npy"
 target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target1.png"
 
 modifier = np.load(modifier_path)
@@ -90,8 +90,6 @@ elif metric == "photoDNA":
 else:
   threshold = 90
 
-
-
 if metric == "phash256":
   h2 = imagehash.phash(target, hash_size=16)
 elif metric == "photoDNA":
@@ -106,49 +104,49 @@ c = len(img_list)
 success = 0
 total_decrement = 0
 
-for i, file_name in tqdm(enumerate(img_list)):
-  # if i >= c:
-  #   break
-  img = Image.open(os.path.join(test_image_path, file_name)).convert("RGB")
+for j, file_name in tqdm(enumerate(img_list)):
+    # if i >= c:
+    #   break
+    img = Image.open(os.path.join(test_image_path, file_name)).convert("RGB")
 
-  if metric == "phash256":
-    h1 = imagehash.phash(img, hash_size=16)
-    original_differ = h1 - h2
-  elif metric == "photoDNA":
-    h1 = generatePhotoDNAHash(img)
-    original_differ = PhotoDNA_Distance(h1, h2)
-  else:
-  # elif metric == "PDQ":
-    h1 = pdq(img)
-    original_differ = pdq_differ(h1, h2)
+    if metric == "phash256":
+        h1 = imagehash.phash(img, hash_size=16)
+        original_differ = h1 - h2
+    elif metric == "photoDNA":
+        h1 = generatePhotoDNAHash(img)
+        original_differ = PhotoDNA_Distance(h1, h2)
+    else:
+    # elif metric == "PDQ":
+        h1 = pdq(img)
+        original_differ = pdq_differ(h1, h2)
 
-  img = np.array(img)
+    img = np.array(img)
 
-  scaled_modifier = zoom(modifier, (img.shape[0] / modifier.shape[0], img.shape[1] / modifier.shape[1], 1))
-#   print(img.shape, scaled_modifier.shape)
+    scaled_modifier = zoom(modifier, (img.shape[0] / modifier.shape[0], img.shape[1] / modifier.shape[1], 1))
+    #   print(img.shape, scaled_modifier.shape)
 
-  img = img + scaled_modifier * 255
-  img = np.clip(img, 0, 255).astype(np.uint8) 
-  img = Image.fromarray(img)
+    img = img + scaled_modifier * 255
+    img = np.clip(img, 0, 255).astype(np.uint8) 
+    img = Image.fromarray(img)
 
-  if metric == "phash256":
-    h1 = imagehash.phash(img, hash_size=16)
-    transfer_differ = h1 - h2
-  elif metric == "photoDNA":
-    h1 = generatePhotoDNAHash(img)
-    transfer_differ = PhotoDNA_Distance(h1, h2)
-  else:
-  # elif metric == "PDQ":
-    h1 = pdq(img)
-    transfer_differ = pdq_differ(h1, h2)
-  
-  total_decrement += transfer_differ - original_differ
-#   print(transfer_differ - original_differ)
-#   print("hash coolision ratio = ", success / (i + 1))
-  if transfer_differ <= threshold:
-    success += 1
-    # print(file_name)
-    # img.save(file_name)
+    if metric == "phash256":
+        h1 = imagehash.phash(img, hash_size=16)
+        transfer_differ = h1 - h2
+    elif metric == "photoDNA":
+        h1 = generatePhotoDNAHash(img)
+        transfer_differ = PhotoDNA_Distance(h1, h2)
+    else:
+    # elif metric == "PDQ":
+        h1 = pdq(img)
+        transfer_differ = pdq_differ(h1, h2)
+    
+    total_decrement += transfer_differ - original_differ
+    #   print(transfer_differ - original_differ)
+    #   print("hash coolision ratio = ", success / (i + 1))
+    if transfer_differ <= threshold:
+        success += 1
+        # print(file_name)
+        # img.save(file_name)
 
 
 print("total image number = ", c)
