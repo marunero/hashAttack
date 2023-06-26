@@ -82,10 +82,12 @@ modifier = np.load("result/06_21_19_16_scaled_modifier.npy")
 
 while True:
     ImageID = int(input("Image id = "))
-    targetImageID = int(input("Target Image id = "))
+    
+    # targetImageID = int(input("Target Image id = "))
+    targetImageID = 0
 
 
-    img1 = Image.open('InputImages/id{:04d}.png'.format(ImageID)).convert("RGB")
+    img1 = Image.open('InputImages/id1{:03d}.png'.format(ImageID)).convert("RGB")
     img2 = Image.open('targetImages/id{:03d}.png'.format(targetImageID)).convert("RGB")
 
     # img3 = np.array(img1)

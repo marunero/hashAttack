@@ -497,6 +497,7 @@ def pdq_differ(h1, h2):
 #   scaled_img.save(os.path.join(save_path, file_name))
 
 test_image_path = r"C:\Users\sungwoo\Downloads\hashAttack\InputImages"
+save_path = r"C:\Users\sungwoo\Downloads\hashAttack\input_achieve\category1_train"
 target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target1.png"
 
 target = Image.open(target_image_path)
@@ -530,17 +531,21 @@ for i in range(len(hashes)):
       max_i = j
   
   result_index.append(index[max_i])
-  compH = max_h
-  print(max_d)
+  # compH = max_h
+  
 
   hashes.pop(max_i)
   index.pop(max_i)
   
 print(result_index)
 
+result_index.reverse()
+
+print(result_index)
+
 for i in range(len(result_index)):
-  img_id = f"id{result_index[i]:04d}.png"
-  rename_id = f"id{(1000 + i):04d}.png"
+  img_id = f"id1{result_index[i]:03d}.png"
+  rename_id = f"id2{i:03d}.png"
 
   image = Image.open(os.path.join(test_image_path, img_id))
-  image.save(os.path.join(test_image_path, rename_id))
+  image.save(os.path.join(save_path, rename_id))
