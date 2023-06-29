@@ -73,9 +73,9 @@ def pdq_differ(h1, h2):
   return ((h1 != h2) * 1).sum()
 
 
-test_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category1_test"
-modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/06_26_09_59_scaled_modifier.npy"
-target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target1.png"
+test_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category2_test"
+modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/06_29_12_35_scaled_modifier.npy"
+target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target2.png"
 
 modifier = np.load(modifier_path)
 target = Image.open(target_image_path)
@@ -147,7 +147,6 @@ for j, file_name in tqdm(enumerate(img_list)):
         success += 1
         # print(file_name)
         # img.save(file_name)
-
 
 print("total image number = ", c)
 print("hash collision number = ", success)

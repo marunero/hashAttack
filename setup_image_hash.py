@@ -80,8 +80,7 @@ def loss_phash64(inputs, target, targeted):
 
         a.append(h1 - h2)
         
-    a = np.asarray(a)
-    a = a.astype('float32')
+    a = np.asarray(a, dtype=np.float32)
     return a
 
 def loss_phash256(inputs, target, targeted):
@@ -95,8 +94,7 @@ def loss_phash256(inputs, target, targeted):
 
         a.append(h1 - h2)
         
-    a = np.asarray(a)
-    a = a.astype('float32')
+    a = np.asarray(a, dtype=np.float32)
     return a
 
 def loss_photoDNA(inputs, target, targeted):
@@ -109,23 +107,25 @@ def loss_photoDNA(inputs, target, targeted):
 
         a.append(PhotoDNA_Distance(h1, h2))
 
-    a = np.asarray(a)
-    a = a.astype('float32')
+    a = np.asarray(a, dtype=np.float32)
     return a
     
+# np array dtype = / 추가
+# n=16 random 다시 돌리고
+# maximum들에 대해 다시 고
 
 
 def loss_PDQ(inputs, target, targeted):
     a = []
 
     img1 = gen_image(target)
-    np_img1 = np.array(img1)
+    np_img1 = np.array(img1, dtype=np.uint8)
     cv2_img1 = cv2.cvtColor(np_img1, cv2.COLOR_RGB2BGR)
     h1, q1 = pdqhash.compute(cv2_img1)
 
     for i in range(inputs.shape[0]):
         img2 = gen_image(inputs[i])
-        np_img2 = np.array(img2)
+        np_img2 = np.array(img2, dtype=np.uint8)
         cv2_img2 = cv2.cvtColor(np_img2, cv2.COLOR_RGB2BGR)
         h2, q2 = pdqhash.compute(cv2_img2)
 
@@ -135,8 +135,7 @@ def loss_PDQ(inputs, target, targeted):
         a.append(differ)
         
     
-    a = np.asarray(a)
-    a = a.astype('float32')
+    a = np.asarray(a, dtype=np.float32)
     return a
 
 def loss_PDQ_photoDNA(inputs, target, targeted):
@@ -145,7 +144,7 @@ def loss_PDQ_photoDNA(inputs, target, targeted):
     h1_photoDNA = generatePhotoDNAHash(gen_image(target))
 
     img1 = gen_image(target)    
-    np_img1 = np.array(img1)
+    np_img1 = np.array(img1, dtype=np.uint8)
     cv2_img1 = cv2.cvtColor(np_img1, cv2.COLOR_RGB2BGR)
     h1_PDQ, q1 = pdqhash.compute(cv2_img1)
 
@@ -153,7 +152,7 @@ def loss_PDQ_photoDNA(inputs, target, targeted):
         h2_photoDNA = generatePhotoDNAHash(gen_image(inputs[i]))
 
         img2 = gen_image(inputs[i])
-        np_img2 = np.array(img2)
+        np_img2 = np.array(img2, dtype=np.uint8)
         cv2_img2 = cv2.cvtColor(np_img2, cv2.COLOR_RGB2BGR)
         h2_PDQ, q2 = pdqhash.compute(cv2_img2)
 
@@ -164,8 +163,7 @@ def loss_PDQ_photoDNA(inputs, target, targeted):
         a.append(max(differ_PDQ, 90) * 20 + max(differ_photoDNA, 1800))
         
 
-    a = np.asarray(a)
-    a = a.astype('float32')
+    a = np.asarray(a, dtype=np.float32)
     return a
 
 
@@ -174,8 +172,8 @@ def read_inputImage(ff):
 
   img = Image.open(f)
   img_gray = img.convert("L")
-  img = np.array(img)
-  gray_img = np.array(img_gray)
+  img = np.array(img, dtype=np.uint8)
+  gray_img = np.array(img_gray, dtype=np.uint8)
 
   img = resize(img,(img.shape[0], img.shape[1], 3), anti_aliasing=True)
   gray_img = resize(gray_img,(gray_img.shape[0],gray_img.shape[1], 1), anti_aliasing=True)
@@ -200,15 +198,15 @@ class ImageNet:
     for i in range(len(target_list)):
         f = targetImages_path + target_list[i]
         img = Image.open(f)
-        img = np.array(img)
+        img = np.array(img, dtype=np.uint8)
         img = resize(img, (img.shape[0], img.shape[1], 3), anti_aliasing = True)
         img -= 0.5
 
         target_data.append(img)
 
-    self.input_images_rgb = np.array(input_images_rgb)
-    self.input_images_gray = np.array(input_images_gray)
-    self.target_images_rgb = np.array(target_data)
+    self.input_images_rgb = np.array(input_images_rgb, dtype=np.float32)
+    self.input_images_gray = np.array(input_images_gray, dtype=np.float32)
+    self.target_images_rgb = np.array(target_data, dtype=np.float32)
 
 class ImageNet_Hash:
     def __init__(self, targeted = True):

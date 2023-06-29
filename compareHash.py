@@ -78,17 +78,17 @@ def PhotoDNA_Distance(h1, h2):
 		distance += abs(h1[i] - h2[i])
 	return distance
 
-modifier = np.load("result/06_21_19_16_scaled_modifier.npy")
+# modifier = np.load("result/06_21_19_16_scaled_modifier.npy")
 
 while True:
     ImageID = int(input("Image id = "))
     
-    # targetImageID = int(input("Target Image id = "))
-    targetImageID = 0
+    targetImageID = int(input("Target Image id = "))
+    # targetImageID = 1
 
 
-    img1 = Image.open('InputImages/id1{:03d}.png'.format(ImageID)).convert("RGB")
-    img2 = Image.open('targetImages/id{:03d}.png'.format(targetImageID)).convert("RGB")
+    img1 = Image.open('InputImages/id0{:03d}.png'.format(ImageID)).convert("RGB")
+    img2 = Image.open('InputImages/id0{:03d}.png'.format(targetImageID)).convert("RGB")
 
     # img3 = np.array(img1)
     # img3 = img3 + modifier * 255

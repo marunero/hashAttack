@@ -253,7 +253,7 @@ class hash_attack:
         self.momentum = 0.5
         self.perturbation_pixel = 1.0 / 255
         self.perturbation_const = perturbation_const
-        self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
+        self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)], dtype=np.float32)
 
         self.delta = 0.49999 / (mc_sample / 2)
 
@@ -292,7 +292,7 @@ class hash_attack:
 
         # elif self.solver_metric == 'momentum':
         else:
-            self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
+            self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)], dtype=np.float32)
 
             # self.p = np.clip(self.p, self.down, self.up)
 
@@ -304,8 +304,8 @@ class hash_attack:
             losses, loss1, loss2, modifier, scaled_modifier, nimgs = self.sess.run([self.loss, self.loss1, self.loss2, self.modifier, self.scaled_modifier, self.newimg], feed_dict={self.modifier: var})
  
             lr, grad = self.solver(loss1, self.real_modifier, self.learning_rate, self.grad, self.p, self.batch_size, self.multi_imgs_num, self.mc_sample, self.perturbation_pixel, self.resized_shape, self.up, self.down)  
-            self.grad = grad
-            print(loss1)     
+            self.grad = grad 
+            print(loss1)
             # print(loss2)
 
 

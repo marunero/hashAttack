@@ -34,7 +34,7 @@ from tqdm import tqdm
 
 libPath = r'C:\Users\sungwoo\Downloads\hashAttack\pyPhotoDNA\PhotoDNAx64.dll'
 
-mode = "PDQ"
+mode = "phash"
 
 def differ(h1, h2):
     return h1 - h2
@@ -78,7 +78,7 @@ def h2str(hash):
     return result
 
 def get_threshold():
-    ImageNet_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category1_test"
+    ImageNet_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category2_test"
     file_list = os.listdir(ImageNet_path)
     
     hashes = []
@@ -97,7 +97,7 @@ def get_threshold():
         # phash
         if mode == "phash":
             # h = imagehash.phash(img)
-            h = imagehash.phash(img, hash_size=16)
+            h = imagehash.phash(img, hash_size=8)
 
         # photoDNA
         elif mode == "photoDNA":
@@ -125,7 +125,8 @@ def get_threshold():
     for i in tqdm(range(len(hashes))):
         for j in range(i + 1, len(hashes)):
             if mode == "phash":
-                list_differ.append(differ(hashes[i], hashes[j]))
+                dif = differ(hashes[i], hashes[j])
+                list_differ.append(dif)
             elif mode == "photoDNA":
                 dif = PhotoDNA_Distance(hashes[i], hashes[j])
                 if status:
@@ -143,18 +144,18 @@ def get_threshold():
                 dif = ((hashes[i] != hashes[j]) * 1).sum()
                 list_differ.append(dif)
                 
-                if status:
-                    min_d = dif
-                    max_d = dif
-                    status = False
-                else:
-                    min_d = min(dif, min_d)
-                    max_d = max(dif, max_d)
-                
-                if dif in set_differ:
-                    set_differ[dif] += 1
-                else:
-                    set_differ[dif] = 1
+            if status:
+                min_d = dif
+                max_d = dif
+                status = False
+            else:
+                min_d = min(dif, min_d)
+                max_d = max(dif, max_d)
+            
+            if dif in set_differ:
+                set_differ[dif] += 1
+            else:
+                set_differ[dif] = 1
 
     end_time = time.time()
 
@@ -166,6 +167,7 @@ def get_threshold():
     print("총 실행 시간:", elapsed_time, "초")
 
 
+    print(min_d, max_d)
 
     if mode == "phash":
         bins = [i for i in range(256)]
@@ -197,7 +199,6 @@ def get_threshold():
         plt.ylabel('frequency')
         plt.show()
     elif mode == "PDQ":
-        print(min_d, max_d)
         bins = [i for i in range(257)]
         x = list(set_differ.keys())
         y = list(set_differ.values())

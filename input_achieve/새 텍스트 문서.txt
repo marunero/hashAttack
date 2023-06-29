@@ -1,0 +1,10 @@
+id0000 ~ id0025 : random select images
+
+id1000 ~ id1025 : sort as hash values far away in series (start from target image)
+최대 거리 방법(Maximum Distance Method):
+한 점을 선택한 후, 다음 점은 이전에 선택한 점과 최대 거리가 되도록 선택합니다.
+이를 m번 반복하여 m개의 점을 선택합니다.
+
+
+id2000 ~ id2025 : sort as hash values in order close to the target image
+
