@@ -97,6 +97,34 @@ def loss_phash256(inputs, target, targeted):
     a = np.asarray(a, dtype=np.float32)
     return a
 
+def loss_ahash64(inputs, target, targeted):
+    a = []
+    h1 = imagehash.average_hash(gen_image(target))
+
+
+    for i in range(inputs.shape[0]):
+        # black-box
+        h2 = imagehash.average_hash(gen_image(inputs[i]))
+
+        a.append(h1 - h2)
+        
+    a = np.asarray(a, dtype=np.float32)
+    return a
+
+def loss_ahash256(inputs, target, targeted):
+    a = []
+    h1 = imagehash.average_hash(gen_image(target), hash_size=16)
+
+
+    for i in range(inputs.shape[0]):
+        # black-box
+        h2 = imagehash.average_hash(gen_image(inputs[i]), hash_size=16)
+
+        a.append(h1 - h2)
+        
+    a = np.asarray(a, dtype=np.float32)
+    return a
+
 def loss_photoDNA(inputs, target, targeted):
     a = []
 
@@ -110,10 +138,6 @@ def loss_photoDNA(inputs, target, targeted):
     a = np.asarray(a, dtype=np.float32)
     return a
     
-# np array dtype = / 추가
-# n=16 random 다시 돌리고
-# maximum들에 대해 다시 고
-
 
 def loss_PDQ(inputs, target, targeted):
     a = []
@@ -217,6 +241,10 @@ class ImageNet_Hash:
             return tf.py_function(loss_phash64, [inputs, target, self.targeted], tf.float32)
         elif method == "phash256":
             return tf.py_function(loss_phash256, [inputs, target, self.targeted], tf.float32)
+        elif method == "ahash64":
+            return tf.py_function(loss_ahash64, [inputs, target, self.targeted], tf.float32)
+        elif method == "ahash256":
+            return tf.py_function(loss_ahash256, [inputs, target, self.targeted], tf.float32)
         elif method == "pdqhash":
             return tf.py_function(loss_PDQ, [inputs, target, self.targeted], tf.float32)
         elif method == "photoDNA":

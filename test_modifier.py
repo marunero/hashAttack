@@ -74,7 +74,7 @@ def pdq_differ(h1, h2):
 
 
 test_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category2_test"
-modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/06_29_12_35_scaled_modifier.npy"
+modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/07_04_04_14_scaled_modifier.npy"
 target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target2.png"
 
 modifier = np.load(modifier_path)
@@ -141,7 +141,7 @@ for j, file_name in tqdm(enumerate(img_list)):
         transfer_differ = pdq_differ(h1, h2)
     
     total_decrement += transfer_differ - original_differ
-    #   print(transfer_differ - original_differ)
+    # print(transfer_differ - original_differ, original_differ)
     #   print("hash coolision ratio = ", success / (i + 1))
     if transfer_differ <= threshold:
         success += 1

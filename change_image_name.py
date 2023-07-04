@@ -2,7 +2,7 @@ import os
 import shutil
 
 # 대상 폴더의 경로
-folder_path = r'C:\Users\sungwoo\Downloads\data_hashAttack\input\category2_train'
+folder_path = r'C:\Users\sungwoo\Downloads\hashAttack\experiment_img\category3_train_resize'
 save_path = r'C:\Users\sungwoo\Downloads\hashAttack\InputImages'
 # 대상 폴더 안에 있는 모든 파일 가져오기
 files = os.listdir(folder_path)

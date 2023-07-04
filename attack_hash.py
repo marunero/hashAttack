@@ -132,6 +132,10 @@ class hash_attack:
             self.threshold = 1800 + 90 * 20
         elif self.hash_metric == "phash64":
             self.threshold = 14
+        elif self.hash_metric == "ahash64":
+            self.threshold = 14
+        elif self.hash_metric == "ahash256":
+            self.threshold = 40
         else: # phash256
             self.threshold = 90
 

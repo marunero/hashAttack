@@ -84,13 +84,13 @@ def pdq_differ(h1, h2):
 #     return distance
 
 
-img_dir = r"C:\Users\sungwoo\Downloads\hashAttack\InputImages"
+img_dir = r"D:\ILSVRC2012_img_train\affenpinscher "
 
 img_list = os.listdir(img_dir)
 
 total = 0
-for i, file_name in enumerate(img_list):
-    if i > 13:
+for i, file_name in tqdm(enumerate(img_list)):
+    if i > 16:
         break
     img = Image.open(os.path.join(img_dir, file_name))
     h = pdq(img)
@@ -98,48 +98,29 @@ for i, file_name in enumerate(img_list):
     bit_string = ''.join(str(bit) for bit in h)
     integer_value = int(bit_string, 2)
     
-    total += integer_value
-    print(total)
+    total += integer_value / len(img_list)
+    # print(total)
 
-center = int(total / len(img_list))
+center = int(total)
 
 center = bin(center)[2:]
 
 print(center)
 
-target_img_dir = r"D:\ILSVRC2012_img_train\airship"
+target_img_dir = r"D:\ILSVRC2012_img_train\affenpinscher "
 
 target_img_list = os.listdir(target_img_dir)
 
 
 total = 0
-for i, file_name in enumerate(target_img_list):
+for i, file_name in tqdm(enumerate(target_img_list)):
     img = Image.open(os.path.join(target_img_dir, file_name))
     h = pdq(img)
 
     bit_string = ''.join(str(bit) for bit in h)
     
     distance = sum(bit1 != bit2 for bit1, bit2 in zip(bit_string, center))
-    total += distance
+    total += distance ** 2
 
-avg_distance = total / len(target_img_list)
-print("airship = ", avg_distance)
-
-
-target_img_dir = r"D:\ILSVRC2012_img_train\affenpinscher"
-
-target_img_list = os.listdir(target_img_dir)
-
-
-total = 0
-for i, file_name in enumerate(target_img_list):
-    img = Image.open(os.path.join(target_img_dir, file_name))
-    h = pdq(img)
-
-    bit_string = ''.join(str(bit) for bit in h)
-    
-    distance = sum(bit1 != bit2 for bit1, bit2 in zip(bit_string, center))
-    total += distance
-
-avg_distance = total / len(target_img_list)
-print("affenpinscher = ", avg_distance)
+var = total ** 0.5
+print("variance = ", var)

@@ -501,10 +501,10 @@ def pdq_differ(h1, h2):
 #   scaled_img.save(os.path.join(save_path, new_filename))
 
 
-test_image_path = r"C:\Users\sungwoo\Downloads\hashAttack\experiment_img\category2_train_resize"
-save_path = r"C:\Users\sungwoo\Downloads\hashAttack\input_achieve\category2_train\PDQ"
+test_image_path = r"C:\Users\sungwoo\Downloads\hashAttack\experiment_img\category3_train_resize"
+save_path = r"C:\Users\sungwoo\Downloads\hashAttack\input_achieve\category3_train\PDQ"
 
-target_image = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target2.png"
+target_image = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target3.png"
 target = Image.open(target_image)
 h_target = pdq(target)
 
