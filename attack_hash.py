@@ -46,7 +46,7 @@ def coordinate_ADAM(losses, indice, grad, hess, batch_size, mt_arr, vt_arr, real
 
 @jit(nopython=True)
 def momentum(losses, real_modifier, lr, grad, perturbation, batch_size, multi_imgs_num, mc_sample, perturbation_pixel, resized_shape, up, down):
-    g = np.zeros((resized_shape), dtype=np.float32)
+    g = np.zeros((resized_shape))
     a = 0
     b = 0
     c = 0
@@ -136,8 +136,12 @@ class hash_attack:
             self.threshold = 14
         elif self.hash_metric == "ahash256":
             self.threshold = 40
+        elif self.hash_metric == "colorhash":
+            self.threshold = 50
+        elif self.hash_metric == "imagehash_comb":
+            self.threshold = 0
         else: # phash256
-            self.threshold = 90
+            self.threshold = 0
 
         self.use_resize = use_resize
         self.use_tanh = use_tanh
@@ -296,7 +300,7 @@ class hash_attack:
 
         # elif self.solver_metric == 'momentum':
         else:
-            self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)], dtype=np.float32)
+            self.p = np.array([np.random.normal(loc = 0, scale = self.perturbation_pixel, size = self.resized_shape) for j in range(self.mc_sample // 2)])
 
             # self.p = np.clip(self.p, self.down, self.up)
 

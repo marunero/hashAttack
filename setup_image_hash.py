@@ -138,6 +138,46 @@ def loss_photoDNA(inputs, target, targeted):
     a = np.asarray(a, dtype=np.float32)
     return a
     
+def loss_colorhash(inputs, target, targeted):
+    a = []
+    h1 = imagehash.colorhash(gen_image(target), binbits=16)
+
+
+    for i in range(inputs.shape[0]):
+        # black-box
+        h2 = imagehash.colorhash(gen_image(inputs[i]), binbits=16)
+
+        a.append(h1 - h2)
+        
+    a = np.asarray(a, dtype=np.float32)
+    return a
+
+def loss_imagehash_comb(inputs, target, targeted):
+    a = []
+    h1_color = imagehash.colorhash(gen_image(target), binbits=16)
+    h1_ahash = imagehash.average_hash(gen_image(target), hash_size=16)
+    h1_phash = imagehash.phash(gen_image(target), hash_size=16)
+    h1_whash = imagehash.whash(gen_image(target), hash_size=16)
+    h1_dhash = imagehash.dhash(gen_image(target), hash_size=16)
+    
+
+    for i in range(inputs.shape[0]):
+        h2_color = imagehash.colorhash(gen_image(inputs[i]), binbits=16)
+        h2_ahash = imagehash.average_hash(gen_image(inputs[i]), hash_size=16)
+        h2_phash = imagehash.phash(gen_image(inputs[i]), hash_size=16)
+        h2_whash = imagehash.whash(gen_image(inputs[i]), hash_size=16)
+        h2_dhash = imagehash.dhash(gen_image(inputs[i]), hash_size=16)
+
+        dif = h1_color - h2_color
+        dif += h1_ahash - h2_ahash
+        dif += h1_phash - h2_phash
+        dif += h1_whash - h2_whash
+        dif += h1_dhash - h2_dhash
+
+        a.append(dif)
+        
+    a = np.asarray(a, dtype=np.float32)
+    return a
 
 def loss_PDQ(inputs, target, targeted):
     a = []
@@ -241,6 +281,8 @@ class ImageNet_Hash:
             return tf.py_function(loss_phash64, [inputs, target, self.targeted], tf.float32)
         elif method == "phash256":
             return tf.py_function(loss_phash256, [inputs, target, self.targeted], tf.float32)
+        elif method == "colorhash":
+            return tf.py_function(loss_colorhash, [inputs, target, self.targeted], tf.float32)
         elif method == "ahash64":
             return tf.py_function(loss_ahash64, [inputs, target, self.targeted], tf.float32)
         elif method == "ahash256":
@@ -251,6 +293,8 @@ class ImageNet_Hash:
             return tf.py_function(loss_photoDNA, [inputs, target, self.targeted], tf.float32)
         elif method == "pdq_photoDNA":
             return tf.py_function(loss_PDQ_photoDNA, [inputs, target, self.targeted], tf.float32)
+        elif method == "imagehash_comb":
+            return tf.py_function(loss_imagehash_comb, [inputs, target, self.targeted], tf.float32)
         # else
         else:
             return tf.py_function(loss_photoDNA, [inputs, target, self.targeted], tf.float32)

@@ -35,6 +35,7 @@ libPath = './pyPhotoDNA/PhotoDNAx64.dll'
 
 import pdqhash
 import imagehash
+import robusthash
 
 # photoDNA
 import glob
@@ -134,38 +135,58 @@ def pdq_differ(h1, h2):
 
 import imagehash
 
-img1 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\8.jpg")
-img2 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\modified_img.png")
+# img1 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\1_search.png")
+# img3 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\1_top.jpg")
+# img2 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\2_search.jpg")
+# img4 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\2_top.jpg")
 
-h1 = imagehash.average_hash(img1)
-h2 = imagehash.average_hash(img2)
-print("ahash = ", h1 - h2)
-
-
-h1 = imagehash.phash(img1)
-h2 = imagehash.phash(img2)
-print("phash = ", h1 - h2)
-
-
-h1 = imagehash.whash(img1)
-h2 = imagehash.whash(img2)
-print("whash = ", h1 - h2)
-
-h1 = imagehash.dhash(img1)
-h2 = imagehash.dhash(img2)
-print("dhash = ", h1 - h2)
-
-h1 = imagehash.dhash(img1)
-h2 = imagehash.dhash(img2)
-print("dhash = ", h1 - h2)
-# h3 = imagehash.phash(img1, hash_size=16)
-# h4 = imagehash.phash(img2, hash_size=16)
-# print(h3 - h4)
+# h1 = imagehash.average_hash(img1)
+# h2 = imagehash.average_hash(img2)
+# h3 = imagehash.average_hash(img3)
+# h4 = imagehash.average_hash(img4)
+# print("original change ahash = ", h1 - h2)
+# print("modified change ahash = ", h3 - h4)
 
 
-h1 = pdq(img1)
-h2 = pdq(img2)
-print("PDQ = ", pdq_differ(h1, h2))
+# h1 = imagehash.phash(img1)
+# h2 = imagehash.phash(img2)
+# h3 = imagehash.phash(img3)
+# h4 = imagehash.phash(img4)
+# print("original change phash = ", h1 - h2)
+# print("modified change phash = ", h3 - h4)
+
+
+# h1 = imagehash.whash(img1)
+# h2 = imagehash.whash(img2)
+# h3 = imagehash.whash(img3)
+# h4 = imagehash.whash(img4)
+# print("original change whash = ", h1 - h2)
+# print("modified change whash = ", h3 - h4)
+
+# h1 = imagehash.dhash(img1)
+# h2 = imagehash.dhash(img2)
+# h3 = imagehash.dhash(img3)
+# h4 = imagehash.dhash(img4)
+# print("original change dhash = ", h1 - h2)
+# print("modified change dhash = ", h3 - h4)
+
+# # h3 = imagehash.phash(img1, hash_size=16)
+# # h4 = imagehash.phash(img2, hash_size=16)
+# # print(h3 - h4)
+
+# h1 = imagehash.colorhash(img1, binbits=16)
+# h2 = imagehash.colorhash(img2, binbits=16)
+# h3 = imagehash.colorhash(img3, binbits=16)
+# h4 = imagehash.colorhash(img4, binbits=16)
+# print("original change colorhash = ", h1 - h2)
+# print("modified change colorhash = ", h3 - h4)
+
+# h1 = pdq(img1)
+# h2 = pdq(img2)
+# h3 = pdq(img3)
+# h4 = pdq(img4)
+# print("original change PDQ = ", pdq_differ(h1, h2))
+# print("modified change PDQ = ", pdq_differ(h3, h4))
 
 # img2 = np.array(img2)
 # img2 = resize(img2,(img2.shape[0], img2.shape[1], 3), anti_aliasing=True)
@@ -186,3 +207,46 @@ print("PDQ = ", pdq_differ(h1, h2))
 # scaled_array1 = scaled_array1.astype(np.uint8)
 # modified_img1 = Image.fromarray(scaled_array1)
 # modified_img1.save('../test/modified_image1.png')
+
+
+img1 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\600x600_1_de03bfd81b67f19a22b4a6b6f78b1eb1@1200x1200_0xac120003_11440821531661259928.png")
+img2 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\images.jpg")
+
+h1 = imagehash.average_hash(img1)
+h2 = imagehash.average_hash(img2)
+print("original change ahash = ", h1 - h2)
+
+
+h1 = imagehash.phash(img1)
+h2 = imagehash.phash(img2)
+print("original change phash = ", h1 - h2)
+
+
+h1 = imagehash.whash(img1)
+h2 = imagehash.whash(img2)
+print("original change whash = ", h1 - h2)
+
+h1 = imagehash.dhash(img1)
+h2 = imagehash.dhash(img2)
+print("original change dhash = ", h1 - h2)
+
+# h3 = imagehash.phash(img1, hash_size=16)
+# h4 = imagehash.phash(img2, hash_size=16)
+# print(h3 - h4)
+
+h1 = imagehash.colorhash(img1, binbits=16)
+h2 = imagehash.colorhash(img2, binbits=16)
+print("original change colorhash = ", h1 - h2)
+
+h1 = pdq(img1)
+h2 = pdq(img2)
+print("original change PDQ = ", pdq_differ(h1, h2))
+
+
+h1 = generatePhotoDNAHash(img1)
+h2 = generatePhotoDNAHash(img2)
+print("change photoDNA = ", PhotoDNA_Distance(h1, h2))
+
+h1 = robusthash.blockhash(img1.convert("RGB"))
+h2 = robusthash.blockhash(img2.convert("RGB"))
+print(sum(1 for i, j in zip(h1, h2) if i != j))

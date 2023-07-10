@@ -73,9 +73,9 @@ def pdq_differ(h1, h2):
   return ((h1 != h2) * 1).sum()
 
 
-test_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category2_test"
-modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/07_04_04_14_scaled_modifier.npy"
-target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target2.png"
+test_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category3_test"
+modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/07_09_15_16_scaled_modifier.npy"
+target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target3.png"
 
 modifier = np.load(modifier_path)
 target = Image.open(target_image_path)

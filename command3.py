@@ -9,7 +9,12 @@ import time
 
 # os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 128 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
 
-os.system('python main.py -i 0 -n 26 -mu 1 -ti 1 --gpu 0 -mc 128 --targeted -hash ahash256 -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
+# os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --use_resize --resize_size 64 --gpu 0 -mc 128 --targeted -hash ahash256 -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.05 -mi 2000 -pc 100 --save result --seed 25146 --check result/07_04_17_46_modifier.npy')
+
+os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --use_resize --resize_size 64 --gpu 0 -mc 64 --targeted -hash phash256 -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.2 -mi 8000 -pc 64 --save result --seed 25246 --check result/07_04_20_41_modifier.npy')
+
+
+542
 
 # os.system('python main.py -i 0 -n 1 -mu 4 -ti 0 --gpu 0 -mc 32 --targeted -hash pdqhash -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 20000 -pc 100 --save result --seed 25146')
 
