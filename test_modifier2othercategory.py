@@ -82,19 +82,17 @@ category = os.listdir(path)
 category_c = 0
 img_total = 0
 img_success = 0
-
+print("mu1")
 for i, file_name in enumerate(category):
-  if i < 5:
-    continue
   print("category = ", file_name)
   test_image_path = os.path.join(path, file_name)
-  modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/06_28_09_25_scaled_modifier.npy"
+  modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/07_10_22_36_scaled_modifier.npy"
   target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target1.png"
 
   modifier = np.load(modifier_path)
   target = Image.open(target_image_path)
 
-  metric = "PDQ"
+  metric = "phash256"
 
   if metric == "phash256":
     threshold = 90

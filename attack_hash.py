@@ -125,23 +125,25 @@ class hash_attack:
 
         # PhotoDNA threshold
         if self.hash_metric == "photoDNA":
-            self.threshold = 1800
+            self.threshold = 0
         elif self.hash_metric == "pdqhash":
             self.threshold = 90
         elif self.hash_metric == "pdq_photoDNA":
             self.threshold = 1800 + 90 * 20
         elif self.hash_metric == "phash64":
-            self.threshold = 14
+            self.threshold = 0
         elif self.hash_metric == "ahash64":
-            self.threshold = 14
+            self.threshold = 0
         elif self.hash_metric == "ahash256":
             self.threshold = 40
         elif self.hash_metric == "colorhash":
             self.threshold = 50
         elif self.hash_metric == "imagehash_comb":
             self.threshold = 0
-        else: # phash256
+        elif self.hash_metric == "SIFT":
             self.threshold = 0
+        else: # phash256
+            self.threshold = 102
 
         self.use_resize = use_resize
         self.use_tanh = use_tanh
@@ -187,6 +189,7 @@ class hash_attack:
         l = []
 
         for i in range(self.input_images.shape[0]):
+            l.append(self.input_images[i])
             l.append(self.scaled_modifier[0] + self.input_images[i])
 
         for i in range(self.input_images.shape[0]):
@@ -380,13 +383,16 @@ class hash_attack:
                 l, hashdiffer, loss2, modified_imgs, modifier, scaled_modifier = self.blackbox_optimizer()
                 # hashdiffer == loss1
                 
+                if iteration % (100) == 0:
+                    np.save("current_modifier_save", scaled_modifier)
+
                 loss_x.append(iteration)
                 loss_y.append(hashdiffer)
 
-                if hashdiffer.max() <= self.threshold:
-                    success = True
-                    success_iter = iteration
-                    break
+                # if hashdiffer.max() <= self.threshold:
+                #     success = True
+                #     success_iter = iteration
+                #     break
 
                 end_time = time.time()
 

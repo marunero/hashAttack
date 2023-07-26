@@ -72,8 +72,8 @@ def pdq_differ(h1, h2):
   return ((h1 != h2) * 1).sum()
 
 
-image_path = r"C:\Users\sungwoo\Downloads\test_searchengine\id0026.png"
-modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/old/07_05_04_47_scaled_modifier.npy"
+image_path = r"C:\Users\sungwoo\Downloads\hashAttack\InputImages\ramen1.png"
+modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/07_26_12_35_scaled_modifier.npy"
 
 modifier = np.load(modifier_path)
 img = Image.open(image_path).convert("RGB")
@@ -81,7 +81,7 @@ img = Image.open(image_path).convert("RGB")
 img = np.array(img)
 scaled_modifier = zoom(modifier, (img.shape[0] / modifier.shape[0], img.shape[1] / modifier.shape[1], 1))
 
-img = img + scaled_modifier * 255 * 2
+img = img + scaled_modifier * 255 
 img = np.clip(img, 0, 255).astype(np.uint8) 
 
 img = Image.fromarray(img)

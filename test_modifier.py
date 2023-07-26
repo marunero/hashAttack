@@ -73,14 +73,14 @@ def pdq_differ(h1, h2):
   return ((h1 != h2) * 1).sum()
 
 
-test_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category3_test"
-modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/07_09_15_16_scaled_modifier.npy"
-target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target3.png"
+test_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/input/category1_test"
+modifier_path = "C:/Users/sungwoo/Downloads/hashAttack/result/07_18_22_15_scaled_modifier.npy"
+target_image_path = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target1.png"
 
 modifier = np.load(modifier_path)
 target = Image.open(target_image_path)
 
-metric = "PDQ"
+metric = "photoDNA"
 
 if metric == "phash256":
   threshold = 90
@@ -145,8 +145,8 @@ for j, file_name in tqdm(enumerate(img_list)):
     #   print("hash coolision ratio = ", success / (i + 1))
     if transfer_differ <= threshold:
         success += 1
-        # print(file_name)
-        # img.save(file_name)
+        print(file_name)
+        img.save(file_name)
 
 print("total image number = ", c)
 print("hash collision number = ", success)

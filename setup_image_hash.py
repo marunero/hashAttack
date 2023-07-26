@@ -38,6 +38,15 @@ def gen_image(arr):
 
     return img
 
+def gen_image_cv2(arr):
+    arr = np.clip(arr, -0.5, 0.5)
+    fig = np.around((arr + 0.5) * 255.0)
+    fig = fig.astype(np.uint8).squeeze()
+
+    cv2_image = cv2.cvtColor(fig, cv2.COLOR_RGB2BGR)
+
+    return cv2_image
+
 def generatePhotoDNAHash(imageFile):
     if imageFile.mode != 'RGB':
         imageFile = imageFile.convert(mode = 'RGB')
@@ -230,6 +239,48 @@ def loss_PDQ_photoDNA(inputs, target, targeted):
     a = np.asarray(a, dtype=np.float32)
     return a
 
+def calculate_weighted_count(arr):
+    weight_intervals = [(0, 50, 5), (50, 100, 4), (100, 150, 3), (150, 200, 2), (200, 250, 1)]
+    weighted_count = 0
+
+    for value in arr:
+        for start, end, weight in weight_intervals:
+            if start <= value <= end:
+                weighted_count += weight * (250 - value)
+                break  # Break out of the inner loop once the range is found
+
+    return weighted_count
+
+def loss_sift(inputs, target, targeted):
+    a = []
+
+    value_i = 0
+    value_t = 0
+
+    detector = cv2.xfeatures2d.SIFT_create()
+    matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    
+    kp1, desc1 = detector.detectAndCompute(gen_image_cv2(target), None)
+    kp2, desc2 = detector.detectAndCompute(gen_image_cv2(inputs[0]), None)
+
+    for i in range(1, inputs.shape[0]):
+        
+        kp3, desc3 = detector.detectAndCompute(gen_image_cv2(inputs[i]), None)
+
+        matches = matcher.match(desc1, desc3)        
+        filtered_matches_target = [match.distance for match in matches if match.distance <= 250]        
+
+        matches = matcher.match(desc2, desc3)
+        filtered_matches_input = [match.distance for match in matches if match.distance <= 250]
+
+        value_i = calculate_weighted_count(filtered_matches_input) / len(filtered_matches_input)
+        value_t = calculate_weighted_count(filtered_matches_target) / len(filtered_matches_target)
+
+        a.append(value_i - value_t * 3)
+
+    a = np.asarray(a, dtype=np.float32)
+    return a
+
 
 def read_inputImage(ff):
   f = inputImages_path + ff
@@ -295,6 +346,8 @@ class ImageNet_Hash:
             return tf.py_function(loss_PDQ_photoDNA, [inputs, target, self.targeted], tf.float32)
         elif method == "imagehash_comb":
             return tf.py_function(loss_imagehash_comb, [inputs, target, self.targeted], tf.float32)
+        elif method == "SIFT":
+            return tf.py_function(loss_sift, [inputs, target, self.targeted], tf.float32)
         # else
         else:
             return tf.py_function(loss_photoDNA, [inputs, target, self.targeted], tf.float32)

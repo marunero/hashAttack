@@ -84,12 +84,12 @@ def PhotoDNA_Distance(h1, h2):
 # while True:
 #     ImageID = int(input("Image id = "))
     
-#     targetImageID = int(input("Target Image id = "))
-#     # targetImageID = 1
+#     # targetImageID = int(input("Target Image id = "))
+#     targetImageID = 1
 
 
 #     img1 = Image.open('InputImages/id0{:03d}.png'.format(ImageID)).convert("RGB")
-#     img2 = Image.open('InputImages/id0{:03d}.png'.format(targetImageID)).convert("RGB")
+#     img2 = Image.open('targetImages/target1.png'.format(targetImageID)).convert("RGB")
 
 #     # img3 = np.array(img1)
 #     # img3 = img3 + modifier * 255
@@ -209,38 +209,47 @@ import imagehash
 # modified_img1.save('../test/modified_image1.png')
 
 
-img1 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\600x600_1_de03bfd81b67f19a22b4a6b6f78b1eb1@1200x1200_0xac120003_11440821531661259928.png")
-img2 = Image.open(r"C:\Users\sungwoo\Downloads\test_searchengine\images.jpg")
-
-h1 = imagehash.average_hash(img1)
-h2 = imagehash.average_hash(img2)
-print("original change ahash = ", h1 - h2)
+img1 = Image.open(r"C:\Users\sungwoo\Downloads\hashAttack\InputImages\id2025.png")
+img2 = Image.open(r"C:\Users\sungwoo\Downloads\hashAttack\targetImages\target1.png")
 
 
-h1 = imagehash.phash(img1)
-h2 = imagehash.phash(img2)
-print("original change phash = ", h1 - h2)
+# h1 = imagehash.average_hash(img1)
+# h2 = imagehash.average_hash(img2)
+# print("original change ahash = ", h1 - h2)
+# print(h1, h2)
+
+# h1 = imagehash.phash(img1)
+# h2 = imagehash.phash(img2)
+# print("original change phash = ", h1 - h2)
+# print(h1, h2)
 
 
-h1 = imagehash.whash(img1)
-h2 = imagehash.whash(img2)
-print("original change whash = ", h1 - h2)
 
-h1 = imagehash.dhash(img1)
-h2 = imagehash.dhash(img2)
-print("original change dhash = ", h1 - h2)
+# h1 = imagehash.phash(img1, hash_size=16)
+# h2 = imagehash.phash(img2, hash_size=16)
+# print("original change phash256 = ", h1 - h2)
+# print(h1, h2)
 
-# h3 = imagehash.phash(img1, hash_size=16)
-# h4 = imagehash.phash(img2, hash_size=16)
-# print(h3 - h4)
 
-h1 = imagehash.colorhash(img1, binbits=16)
-h2 = imagehash.colorhash(img2, binbits=16)
-print("original change colorhash = ", h1 - h2)
+# h1 = imagehash.whash(img1)
+# h2 = imagehash.whash(img2)
+# print("original change whash = ", h1 - h2)
 
-h1 = pdq(img1)
-h2 = pdq(img2)
-print("original change PDQ = ", pdq_differ(h1, h2))
+# h1 = imagehash.dhash(img1)
+# h2 = imagehash.dhash(img2)
+# print("original change dhash = ", h1 - h2)
+
+# # h3 = imagehash.phash(img1, hash_size=16)
+# # h4 = imagehash.phash(img2, hash_size=16)
+# # print(h3 - h4)
+
+# h1 = imagehash.colorhash(img1, binbits=16)
+# h2 = imagehash.colorhash(img2, binbits=16)
+# print("original change colorhash = ", h1 - h2)
+
+# h1 = pdq(img1)
+# h2 = pdq(img2)
+# print("original change PDQ = ", pdq_differ(h1, h2))
 
 
 h1 = generatePhotoDNAHash(img1)
@@ -248,5 +257,9 @@ h2 = generatePhotoDNAHash(img2)
 print("change photoDNA = ", PhotoDNA_Distance(h1, h2))
 
 h1 = robusthash.blockhash(img1.convert("RGB"))
+print(len(h1))
 h2 = robusthash.blockhash(img2.convert("RGB"))
 print(sum(1 for i, j in zip(h1, h2) if i != j))
+
+h1 = "b0cc247f334ce30f7c3c1a6e3521a31955d8a1e5"
+h2 = "e166e687938e97414fb5848ba159bdfd45fdfc64"

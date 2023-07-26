@@ -156,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument("-mu", "--multi", type=int, default=1, help="number of images to attack simultaneously")
     parser.add_argument("-mc", "--mc_sample", type=int, default=2, help="number of samples for Monte Carlo")
     parser.add_argument("-t", "--targeted", action='store_true')
-    parser.add_argument("-hash", "--hash", choices=["phash64", "phash256", "pdqhash", "photoDNA", "pdq_photoDNA", "ahash64", "ahash256", "colorhash", "imagehash_comb"], default="phash64")
+    parser.add_argument("-hash", "--hash", choices=["phash64", "phash256", "pdqhash", "photoDNA", "pdq_photoDNA", "ahash64", "ahash256", "colorhash", "imagehash_comb", "SIFT"], default="phash64")
     parser.add_argument("-dist", "--distance_metric", choices=["l2dist", "pdist"], default="l2dist")
     parser.add_argument("--optimizer", choices=["adam", "momentum"], default="adam")
 

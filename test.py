@@ -501,12 +501,12 @@ def pdq_differ(h1, h2):
 #   scaled_img.save(os.path.join(save_path, new_filename))
 
 
-test_image_path = r"C:\Users\sungwoo\Downloads\hashAttack\experiment_img\category3_train_resize"
-save_path = r"C:\Users\sungwoo\Downloads\hashAttack\input_achieve\category3_train\PDQ"
+test_image_path = r"C:\Users\sungwoo\Downloads\hashAttack\experiment_img\category1_train_resize"
+save_path = r"C:\Users\sungwoo\Downloads\hashAttack\input_achieve\category1_train\photoDNA"
 
-target_image = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target3.png"
+target_image = "C:/Users/sungwoo/Downloads/data_hashAttack/target/target1.png"
 target = Image.open(target_image)
-h_target = pdq(target)
+h_target = generatePhotoDNAHash(target)
 
 images = os.listdir(test_image_path)
 
@@ -521,7 +521,7 @@ hashes = []
 index = []
 
 for i, file_name in enumerate(images):
-  h = pdq(Image.open(os.path.join(test_image_path, file_name)))
+  h = generatePhotoDNAHash(Image.open(os.path.join(test_image_path, file_name)))
   index.append(i)
   hashes.append(h)
 
@@ -535,7 +535,7 @@ for i in range(len(hashes)):
   max_i = 0
 
   for j in range(len(hashes)):
-    dif = pdq_differ(compH, hashes[j])
+    dif = PhotoDNA_Distance(compH, hashes[j])
     if dif > max_d:
       max_d = dif
       max_h = hashes[j]
@@ -562,7 +562,7 @@ hashes = []
 index = []
 
 for i, file_name in enumerate(images):
-  h = pdq(Image.open(os.path.join(test_image_path, file_name)))
+  h = generatePhotoDNAHash(Image.open(os.path.join(test_image_path, file_name)))
   index.append(i)
   hashes.append(h)
 
@@ -576,7 +576,7 @@ for i in range(len(hashes)):
   max_i = 0
 
   for j in range(len(hashes)):
-    dif = pdq_differ(compH, hashes[j])
+    dif = PhotoDNA_Distance(compH, hashes[j])
     if dif > max_d:
       max_d = dif
       max_h = hashes[j]
