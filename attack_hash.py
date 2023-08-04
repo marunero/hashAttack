@@ -320,7 +320,7 @@ class hash_attack:
             # print(loss2)
 
 
-        return losses[0:self.multi_imgs_num], loss1[0:self.multi_imgs_num], loss2[0:self.multi_imgs_num], nimgs[0:self.multi_imgs_num], modifier[0], scaled_modifier[0]
+        return losses[0:self.multi_imgs_num], loss1[0:self.multi_imgs_num], loss2[0:self.multi_imgs_num], nimgs[1:self.multi_imgs_num + 1], modifier[0], scaled_modifier[0]
 
     def attack_batch(self, input_images, target_image):
         lower_bound = 0.0

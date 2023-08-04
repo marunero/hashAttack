@@ -54,16 +54,22 @@ os.system('cd {}'.format(os.getcwd()))
 
 # os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 32 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.1 -mi 2000 -pc 1 --save result')
 
-os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 8 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.05 -mi 2000 -pc 1 --save result')
+os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 16 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.1 -mi 2000 -pc 1 --save result')
 
-# os.system('python main.py -i 0 -n 1 -mu 2 -ti 0 --gpu 0 -mc 64 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.01 -mi 20000 -pc 64 --save result --seed 25146')
+os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 16 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.1 -mi 4000 -pc 1 --save result')
 
-# os.system('python main.py -i 0 -n 1 -mu 4 -ti 0 --gpu 0 -mc 32 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.01 -mi 20000 -pc 64 --save result --seed 25146')
-
-# os.system('python main.py -i 0 -n 1 -mu 8 -ti 0 --gpu 0 -mc 16 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.01 -mi 20000 -pc 64 --save result --seed 25146')
-
-# os.system('python main.py -i 0 -n 1 -mu 12 -ti 0 --gpu 0 -mc 10 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.01 -mi 20000 -pc 64 --save result --seed 25146')
-
-# os.system('python main.py -i 0 -n 1 -mu 20 -ti 0 --gpu 0 -mc 6 --targeted -hash photoDNA -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.01 -mi 20000 -pc 64 --save result --seed 25146')
+os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 16 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.1 -mi 8000 -pc 1 --save result')
 
 
+
+os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 16 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 2000 -pc 1 --save result')
+os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 16 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --batch 1 -lr 0.1 -mi 4000 -pc 1 --save result')
+
+
+# os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 8 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.0005 -mi 4000 -pc 1 --save result')
+
+# os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 8 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.0005 -mi 8000 -pc 1 --save result')
+
+# os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 8 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.0005 -mi 16000 -pc 1 --save result')
+
+# os.system('python main.py -i 0 -n 1 -mu 1 -ti 0 --gpu 0 -mc 8 --targeted -hash SIFT -dist l2dist --optimizer momentum --use_grayscale --use_resize --resize_size 128 --batch 1 -lr 0.001 -mi 16000 -pc 1 --save result')

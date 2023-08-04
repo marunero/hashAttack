@@ -240,7 +240,7 @@ def loss_PDQ_photoDNA(inputs, target, targeted):
     return a
 
 def calculate_weighted_count(arr):
-    weight_intervals = [(0, 50, 5), (50, 100, 4), (100, 150, 3), (150, 200, 2), (200, 250, 1)]
+    weight_intervals = [(0, 50, 16), (50, 100, 8), (100, 150, 4), (150, 200, 2), (200, 250, 1), (250, 500, 0.5)]
     weighted_count = 0
 
     for value in arr:
@@ -252,34 +252,75 @@ def calculate_weighted_count(arr):
     return weighted_count
 
 def loss_sift(inputs, target, targeted):
+    # a = []
+
+    # value_i = 0
+    # value_t = 0
+    # const = 0.00001
+
+    # detector = cv2.ORB_create(nfeatures=153)
+
+    # matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    
+    # kp1, desc1 = detector.detectAndCompute(gen_image_cv2(target), None)
+    # kp2, desc2 = detector.detectAndCompute(gen_image_cv2(inputs[0]), None)
+
+    # for i in range(1, inputs.shape[0]):
+        
+    #     kp3, desc3 = detector.detectAndCompute(gen_image_cv2(inputs[i]), None)
+
+    #     matches = matcher.match(desc1, desc3)        
+    #     matches_distance = [match.distance for match in matches]        
+    #     value_t = len(matches) - sum(matches_distance) * const
+
+    #     matches = matcher.match(desc2, desc3)
+    #     matches_distance = [match.distance for match in matches]
+    #     value_i = len(matches) - sum(matches_distance) * const
+
+    #     # value_i = calculate_weighted_count(matches_distance_input) / len(matches_distance_input)
+    #     # value_t = calculate_weighted_count(matches_distance_target) / len(matches_distance_target)
+
+    #     a.append(value_i - 3 * value_t)
+
+    # a = np.asarray(a, dtype=np.float32)
+    # return a
+
     a = []
 
-    value_i = 0
-    value_t = 0
+    sift = cv2.xfeatures2d.SIFT_create(nfeatures=153)
 
-    detector = cv2.xfeatures2d.SIFT_create()
-    matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    FLANN_INDEX_KDTREE = 0
+    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+    search_params = dict(checks=50)   # or pass empty dictionary
+    flann = cv2.FlannBasedMatcher(index_params,search_params)
     
-    kp1, desc1 = detector.detectAndCompute(gen_image_cv2(target), None)
-    kp2, desc2 = detector.detectAndCompute(gen_image_cv2(inputs[0]), None)
+    kp1, desc1 = sift.detectAndCompute(gen_image_cv2(target), None)
+    kp2, desc2 = sift.detectAndCompute(gen_image_cv2(inputs[0]), None)
 
-    for i in range(1, inputs.shape[0]):
+    for i in range(1, inputs.shape[0]):        
+        kp3, desc3 = sift.detectAndCompute(gen_image_cv2(inputs[i]), None)
+
+        matches = flann.knnMatch(desc1, desc3, k = 2)
+
+        count_t = 0
+        count_i = 0
+        # ratio test as per Lowe's paper
+        for j,(m,n) in enumerate(matches):
+            if m.distance < 0.35 * n.distance:
+                count_t += 1
+
         
-        kp3, desc3 = detector.detectAndCompute(gen_image_cv2(inputs[i]), None)
+        matches = flann.knnMatch(desc2, desc3, k = 2)
+        for j,(m,n) in enumerate(matches):
+            if m.distance < 0.35 * n.distance:
+                count_i += 1
 
-        matches = matcher.match(desc1, desc3)        
-        filtered_matches_target = [match.distance for match in matches if match.distance <= 250]        
-
-        matches = matcher.match(desc2, desc3)
-        filtered_matches_input = [match.distance for match in matches if match.distance <= 250]
-
-        value_i = calculate_weighted_count(filtered_matches_input) / len(filtered_matches_input)
-        value_t = calculate_weighted_count(filtered_matches_target) / len(filtered_matches_target)
-
-        a.append(value_i - value_t * 3)
+        a.append(count_i - count_t)
 
     a = np.asarray(a, dtype=np.float32)
     return a
+
+
 
 
 def read_inputImage(ff):
